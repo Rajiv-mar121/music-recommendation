@@ -14,6 +14,7 @@ from sklearn.neural_network import MLPClassifier
 from xgboost import XGBClassifier, XGBRFClassifier
 from tensorflow import keras
 from keras.models import Sequential
+import matplotlib.pyplot as plt
 import joblib
 import os
 
@@ -152,7 +153,13 @@ def create_xgboostmodels():
     #print(y_train_encoded)    
 
 
-    
+ #Plotting the curves
+def plotValidate(history, filename):
+    print("Validation Accuracy",max(history.history["val_accuracy"]))
+    pd.DataFrame(history.history).plot(figsize=(12,6))
+    #plt.show()
+    plt.savefig("output/"+filename)
+    plt.close()   
 
 #The loss is calculated using sparse_categorical_crossentropy function
 def trainNeuralModel(model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs, optimizer):
@@ -196,13 +203,27 @@ def create_cnn_model():
 ])
     
     print(cnn_model.summary())
-    model_history = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=800, optimizer='adam')
+    model_history = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=20, optimizer='adam')
     print(model_history)
     joblib.dump(cnn_model, "models/cnn_model.joblib")
     test_loss, test_accuracy = cnn_model.evaluate(X_test_cnn, y_test_cnn, batch_size=128)
     print("The test loss is :",test_loss)
     print("\nThe test Accuracy is :",test_accuracy*100)
+    plotValidate(model_history, "cnn_history.png")
 
+
+def song_recommender_data():
+    # Read data
+    song_30sec_data = pd.read_csv(f'{audio_data_path}/features_30_sec.csv', index_col='filename')
+    # Extract labels
+    labels = song_30sec_data[['label']]
+
+    # Drop labels from original dataframe
+    song_30sec_data = song_30sec_data.drop(columns=['length','label'])
+    print(song_30sec_data.head())
+    # Scale the data to make mean = 0 and Std deviation =1
+    data_scaled=preprocessing.scale(song_30sec_data)
+    print(data_scaled)
 
 # print(list(os.listdir(f'{audio_data_path}/genres_original/')))
 
@@ -218,4 +239,5 @@ if __name__ == "__main__":
    #create_models()
    #create_xgboostmodels()
    create_cnn_model()
+   song_recommender_data()
    
