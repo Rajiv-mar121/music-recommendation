@@ -1,0 +1,31 @@
+# IDE directories
+.vscode/
+.idea/
+.project/
+.classpath/
+
+# Data set
+data
+
+# model files
+models
+
+# Visual Studio
+.vscode/
+.vscode/*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env
+.venv
+venv/
+pip-log.txt
+
+
+# Flask
+instance/
+.webassets-cache
