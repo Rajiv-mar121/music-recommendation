@@ -12,6 +12,8 @@ from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from xgboost import XGBClassifier, XGBRFClassifier
+from tensorflow import keras
+from keras.models import Sequential
 import joblib
 import os
 
@@ -134,6 +136,8 @@ def create_xgboostmodels():
     label_encoder = LabelEncoder()
     # Fit and transform the training labels
     y_train_encoded = label_encoder.fit_transform(y_train)
+    print(y_train_encoded)
+
     # Transform the test labels (if needed)
     y_test_encoded = label_encoder.transform(y_test) 
 
@@ -150,7 +154,54 @@ def create_xgboostmodels():
 
     
 
+#The loss is calculated using sparse_categorical_crossentropy function
+def trainNeuralModel(model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs, optimizer):
+    batch_size = 128
+    model.compile(optimizer=optimizer,
+                  loss='sparse_categorical_crossentropy',
+                   metrics=['accuracy']
+    )
+    return model.fit(X_train_cnn, y_train_cnn, validation_data=(X_test_cnn, y_test_cnn), epochs=epochs, batch_size=batch_size)
 
+
+def create_cnn_model():
+
+    label_encoder = LabelEncoder()
+    y_train_cnn = label_encoder.fit_transform(y_train)
+    print(y_train_cnn)
+
+    y_test_cnn = label_encoder.fit_transform(y_test)
+    print(y_test_cnn)
+
+    X_train_cnn = X_train.astype('float32') / 255.0
+    X_test_cnn = X_test.astype('float32') / 255.0
+
+    cnn_model = keras.models.Sequential([
+    keras.layers.Input(shape=(X_train_cnn.shape[1],)),
+    keras.layers.Dense(512, activation="relu"),    
+    #keras.layers.Dense(512, activation="relu", input_shape=(X_train_cnn.shape[1],)),
+    keras.layers.Dropout(0.2),
+    
+    keras.layers.Dense(256,activation="relu"),
+    keras.layers.Dropout(0.2),
+    
+    keras.layers.Dense(128,activation="relu"),
+    keras.layers.Dropout(0.2),
+    
+    keras.layers.Dense(64,activation="relu"),
+    keras.layers.Dropout(0.2),
+    
+    keras.layers.Dense(10, activation="softmax"),
+    
+])
+    
+    print(cnn_model.summary())
+    model_history = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=800, optimizer='adam')
+    print(model_history)
+    joblib.dump(cnn_model, "models/cnn_model.joblib")
+    test_loss, test_accuracy = cnn_model.evaluate(X_test_cnn, y_test_cnn, batch_size=128)
+    print("The test loss is :",test_loss)
+    print("\nThe test Accuracy is :",test_accuracy*100)
 
 
 # print(list(os.listdir(f'{audio_data_path}/genres_original/')))
@@ -165,5 +216,6 @@ if __name__ == "__main__":
    print(data.head())
    ceate_features_target()
    #create_models()
-   create_xgboostmodels()
+   #create_xgboostmodels()
+   create_cnn_model()
    
