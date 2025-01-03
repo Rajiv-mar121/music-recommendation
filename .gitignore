@@ -7,6 +7,9 @@
 # Data set
 data
 
+# Output generated data 
+output
+
 # model files
 models
 

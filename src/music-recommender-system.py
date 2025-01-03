@@ -63,6 +63,12 @@ def fit_and_save_models(model, title = "Default"):
     preds = model.predict(X_test)
     #print(confusion_matrix(y_test, preds))
     print('Accuracy', title, ':', round(accuracy_score(y_test, preds), 5), '\n')
+    report = classification_report(y_test, preds)
+    print(f'Classification Report Testing:\n {report}')
+    # Saving Classification report to output directory
+    report_filename = title+"_report.txt"
+    with open("output/"+report_filename, "w") as file:
+        file.write(report)
     file_name = title+'.joblib'
     joblib.dump(model, "models/"+file_name)
 
@@ -70,14 +76,16 @@ def fit_and_save_models(model, title = "Default"):
 def fit_and_save_models_xgboost(model, X_train, y_train, y_test ,title = "Default"):
     model.fit(X_train, y_train)
     preds = model.predict(X_test)
-
-    #y_pred_test = model.predict(X_test)
-    #target_names = sorted(set(y))
     print('Accuracy', title, ':', round(accuracy_score(y_test, preds), 5), '\n')
-    #print(f'Testing:\n {classification_report(y_test, y_pred_test, labels=target_names)}')
-    file_name = title+'.joblib'
+    # Saving Classification report to output directory
+    report = classification_report(y_test, preds)
+    print(f'Classification Report Testing:\n {report}')
+    report_filename = title+"_report.txt"
+    with open("output/"+report_filename, "w") as file:
+        file.write(report)
 
     #Save model
+    file_name = title+'.joblib'
     joblib.dump(model, "models/"+file_name)
 
 
@@ -206,9 +214,23 @@ def create_cnn_model():
     model_history = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=20, optimizer='adam')
     print(model_history)
     joblib.dump(cnn_model, "models/cnn_model.joblib")
+    preds = cnn_model.predict(X_test_cnn)
+    #print("CNN Predicts :")
+    #print(preds)
     test_loss, test_accuracy = cnn_model.evaluate(X_test_cnn, y_test_cnn, batch_size=128)
     print("The test loss is :",test_loss)
     print("\nThe test Accuracy is :",test_accuracy*100)
+    set_test = set(y_test_cnn)
+    set_train = set(y_train_cnn)
+    merged_set = set_test.union(set_train)
+    target_names = sorted(set(merged_set))
+    preds_class = np.argmax(preds, axis=1)  # converting back to unique class
+    print(preds_class)
+    report = classification_report(y_test_cnn, preds_class, labels=target_names)
+    print(f'Testing:\n {report}')
+    # Save the report to a text file
+    with open("output/cnn_classification_report.txt", "w") as file:
+        file.write(report)
     plotValidate(model_history, "cnn_history.png")
 
 
@@ -236,8 +258,8 @@ if __name__ == "__main__":
    load_data()
    print(data.head())
    ceate_features_target()
-   #create_models()
-   #create_xgboostmodels()
-   create_cnn_model()
+   create_models()
+   create_xgboostmodels()
+   #create_cnn_model()
    song_recommender_data()
    
