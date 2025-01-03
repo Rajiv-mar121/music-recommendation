@@ -11,6 +11,9 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
+import IPython.display as ipd
+from IPython.display import Audio
+from sklearn.metrics.pairwise import cosine_similarity
 from xgboost import XGBClassifier, XGBRFClassifier
 from tensorflow import keras
 from keras.models import Sequential
@@ -20,12 +23,14 @@ import os
 
 
 audio_data_path = 'data/audio'
+output_path = 'output/'
 # Load Data
 data = None
 X_train = None, 
 X_test = None, 
 y_train = None, 
 y_test = None
+similarity_df_names = None
 def load_data():
     print("Loading data")
     global data 
@@ -65,11 +70,12 @@ def fit_and_save_models(model, title = "Default"):
     print('Accuracy', title, ':', round(accuracy_score(y_test, preds), 5), '\n')
     report = classification_report(y_test, preds)
     print(f'Classification Report Testing:\n {report}')
+    
     # Saving Classification report to output directory
-    report_filename = title+"_report.txt"
-    with open("output/"+report_filename, "w") as file:
+    report_filename = title.capitalize()+"_report.txt"
+    with open(output_path+report_filename, "w") as file:
         file.write(report)
-    file_name = title+'.joblib'
+    file_name = title.lower()+'.joblib'
     joblib.dump(model, "models/"+file_name)
 
 
@@ -77,15 +83,16 @@ def fit_and_save_models_xgboost(model, X_train, y_train, y_test ,title = "Defaul
     model.fit(X_train, y_train)
     preds = model.predict(X_test)
     print('Accuracy', title, ':', round(accuracy_score(y_test, preds), 5), '\n')
+    
     # Saving Classification report to output directory
     report = classification_report(y_test, preds)
     print(f'Classification Report Testing:\n {report}')
-    report_filename = title+"_report.txt"
-    with open("output/"+report_filename, "w") as file:
+    report_filename = title.capitalize()+"_report.txt"
+    with open(output_path+report_filename, "w") as file:
         file.write(report)
 
     #Save model
-    file_name = title+'.joblib'
+    file_name = title.lower()+'.joblib'
     joblib.dump(model, "models/"+file_name)
 
 
@@ -121,12 +128,9 @@ def create_models():
     # random seed used for initializing the random number
     
     neural_net_mlcp = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5000, 10), random_state=1)
-   
-    
-    
-
-    #model_dictionary[f"Decission_trees"] = decision_tree 
-    #model_dictionary[f"Random_Forest"] = randomforest 
+    # Putting all models in dictionary 
+    model_dictionary[f"Decission_trees"] = decision_tree 
+    model_dictionary[f"Random_Forest"] = randomforest 
     model_dictionary[f"Naive_Bayes"] = naive_bayes 
     model_dictionary[f"Stochastic_Gradient_Descent"] = knn
     model_dictionary[f"KNN"] = sgd 
@@ -229,12 +233,13 @@ def create_cnn_model():
     report = classification_report(y_test_cnn, preds_class, labels=target_names)
     print(f'Testing:\n {report}')
     # Save the report to a text file
-    with open("output/cnn_classification_report.txt", "w") as file:
+    with open(output_path+"cnn_classification_report.txt", "w") as file:
         file.write(report)
     plotValidate(model_history, "cnn_history.png")
 
 
 def song_recommender_data():
+    global similarity_df_names 
     # Read data
     song_30sec_data = pd.read_csv(f'{audio_data_path}/features_30_sec.csv', index_col='filename')
     # Extract labels
@@ -243,9 +248,29 @@ def song_recommender_data():
     # Drop labels from original dataframe
     song_30sec_data = song_30sec_data.drop(columns=['length','label'])
     print(song_30sec_data.head())
-    # Scale the data to make mean = 0 and Std deviation =1
+    # Scale the data to make mean = 0 and Std deviation = 1
     data_scaled=preprocessing.scale(song_30sec_data)
     print(data_scaled)
+
+    # Cosine similarity
+    similarity = cosine_similarity(data_scaled)
+    print("Similarity shape:", similarity.shape)
+    # Convert into a dataframe and then set the row index and column names as labels
+    sim_df_labels = pd.DataFrame(similarity)
+    sim_df_names = sim_df_labels.set_index(labels.index)
+    sim_df_names.columns = labels.index
+    similarity_df_names = sim_df_names
+    print(sim_df_names.head())
+
+def find_similar_songs(song_file_name):
+    # Find songs most similar to another song
+    series = similarity_df_names[song_file_name].sort_values(ascending = False)
+    # Remove cosine similarity == 1 (songs will always have the best match with themselves)
+    series = series.drop(song_file_name)
+    
+    # Display the 5 top matches 
+    print("\n*******\nSimilar songs to ", song_file_name)
+    print(series.head(5))
 
 # print(list(os.listdir(f'{audio_data_path}/genres_original/')))
 
@@ -254,12 +279,19 @@ def song_recommender_data():
 # Main code
 
 if __name__ == "__main__":
-   print("Genre Classification initiated")
-   load_data()
-   print(data.head())
-   ceate_features_target()
-   create_models()
-   create_xgboostmodels()
-   #create_cnn_model()
-   song_recommender_data()
+    print("Genre Classification initiated")
+    load_data()
+    print(data.head())
+    ceate_features_target()
+    create_models()
+    create_xgboostmodels()
+    create_cnn_model()
+    song_recommender_data()
+    find_similar_songs('pop.00019.wav')
+    ipd.Audio(f'{audio_data_path}/genres_original/pop/pop.00019.wav') 
+    # Specify the path to the audio file
+    audio_file = f'{audio_data_path}/genres_original/pop/pop.00023.wav'
+
+    # Play the audio
+    Audio(audio_file)
    
