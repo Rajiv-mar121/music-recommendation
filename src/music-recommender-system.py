@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import librosa
 from sklearn import preprocessing
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -31,6 +32,7 @@ X_test = None,
 y_train = None, 
 y_test = None
 similarity_df_names = None
+cols = None
 def load_data():
     print("Loading data")
     global data 
@@ -41,24 +43,96 @@ def load_data():
 
 """ Create fearures and split the data into tarin and test """
 def ceate_features_target():
-    y = data['label'] # genre variable pulling out label column only.
-    X = data.loc[:, data.columns != 'label'] #select all columns but not the labels
+    y = data['label'] # genre variable pulling out label column values only as Series type.
+    
+    #select all columns but not the labels as panda DataFrame with coloum name
+    X = data.loc[:, data.columns != 'label'] 
     #### NORMALIZE X ####
-
+    global cols
     # Normalize so everything is on the same scale. 
-    cols = X.columns
+    cols = X.columns #fetch all column name from Dataframe
+    
     min_max_scaler = preprocessing.MinMaxScaler()
-    np_scaled = min_max_scaler.fit_transform(X)
+    #scale the dataset X to a specified range, typically [0, 1] return  NumPy array
+    np_scaled = min_max_scaler.fit_transform(X) 
 
-    # new data frame with the new scaled data. 
+    # new data frame with the new scaled data and assigns column names from the list cols
     X = pd.DataFrame(np_scaled, columns = cols)
     global  X_train, X_test, y_train, y_test
     # Split data into train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     print(len(X_train))
     print(len(y_train))
+    print(type(X))
+    
+    first_value = X.iloc[30,1] # or for full row X.iloc[30]
+    print(first_value)
     #print(y)
 
+def extract_all_features(audio_path):
+    y, sr = librosa.load(audio_path)
+   # y = librosa.effects.trim(y)
+
+    duration = librosa.get_duration(y=y, sr=sr)
+    # Chroma
+    chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
+    chroma_stft_mean = np.mean(chroma_stft)
+    chroma_stft_var = np.var(chroma_stft)
+
+    # RMS
+    rms = librosa.feature.rms(y=y)
+    rms_mean = np.mean(rms)
+    rms_var = np.var(rms)
+
+    # Spectral Centroid
+    spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
+    spectral_centroid_mean = np.mean(spectral_centroid)
+    spectral_centroid_var = np.var(spectral_centroid)
+
+    # Spectral Bandwidth
+    spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr)
+    spectral_bandwidth_mean = np.mean(spectral_bandwidth)
+    spectral_bandwidth_var = np.var(spectral_bandwidth)
+
+    # Spectral Rolloff
+    rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
+    rolloff_mean = np.mean(rolloff)
+    rolloff_var = np.var(rolloff)
+
+    # Zero Crossing Rate
+    zero_crossing_rate = librosa.feature.zero_crossing_rate(y=y)
+    zero_crossing_rate_mean = np.mean(zero_crossing_rate)
+    zero_crossing_rate_var = np.var(zero_crossing_rate)
+
+    # Harmonic and Percussive
+    harmony, perc = librosa.effects.hpss(y)
+    harmony_mean = np.mean(harmony)
+    harmony_var = np.var(harmony)
+    perceptr_mean = np.mean(perc)
+    perceptr_var = np.var(perc)
+
+    # Tempo
+    onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+    tempo, _ = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
+
+    # MFCCs
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+    mfcc_mean = np.mean(mfcc, axis=1)
+    mfcc_var = np.var(mfcc, axis=1)
+
+    # Combine all features into a single vector
+    features = np.hstack((
+        duration,chroma_stft_mean, chroma_stft_var, rms_mean, rms_var, 
+        spectral_centroid_mean, spectral_centroid_var, spectral_bandwidth_mean, spectral_bandwidth_var, 
+        rolloff_mean, rolloff_var, zero_crossing_rate_mean, zero_crossing_rate_var,
+        harmony_mean, harmony_var, perceptr_mean, perceptr_var, tempo, 
+        mfcc_mean, mfcc_var
+    ))
+    feature_names = [f"f{i+1}" for i in range(len(features))]
+    # Create x_test DataFrame
+    user_audio_feature = pd.DataFrame([features], columns=cols)
+    print(user_audio_feature)
+    return user_audio_feature
 
 """ Prepare models and save it as joblib file"""
 def fit_and_save_models(model, title = "Default"):
@@ -294,4 +368,5 @@ if __name__ == "__main__":
 
     # Play the audio
     Audio(audio_file)
+    extract_all_features(f'{audio_data_path}/genres_original/pop/pop.00023.wav')
    

@@ -43,6 +43,7 @@ if st.button("Submit"):
         if response.status_code == 200:
             st.success("song recommender initiated")
             st.json(response.json())
+            #st.text_area(response.content)
         else:
             st.error(f"Failed to send data: {response.status_code}")
     except Exception as e:
