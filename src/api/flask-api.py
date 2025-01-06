@@ -65,7 +65,7 @@ def predict():
 def extract_all_features(audio_path):
     #data_column = X.columns
     y, sr = librosa.load(audio_path)
-
+    y, _ = librosa.effects.trim(y)
     duration = librosa.get_duration(y=y, sr=sr)
     #print(duration)
     # Chroma
