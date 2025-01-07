@@ -41,7 +41,7 @@ def audio_data_exploration():
     print('Shape of D object:', np.shape(D))
     plt.figure(figsize = (16, 6))
     plt.plot(D);
-    plt.title("SFTF", fontsize = 23);
+    plt.title("Short Time Fourier Transform", fontsize = 23);
     plt.savefig(plt_image_path+"sftf.png", dpi=300, bbox_inches="tight")
     
     # Convert an amplitude spectrogram to Decibels-scaled spectrogram.
@@ -207,7 +207,7 @@ def eda_30sec_audiofiles_data():
     plt.title('Correlation Heatmap (for the MEAN variables)', fontsize = 25)
     plt.xticks(fontsize = 10)
     plt.yticks(fontsize = 10);
-    plt.savefig(plt_image_path+"corr_heatmap.jpg",dpi=300, bbox_inches="tight")
+    plt.savefig(plt_image_path+"corr_heatmap.png",dpi=300, bbox_inches="tight")
     plt.close()
     
     # Box Plot for Genres Distributions
@@ -221,7 +221,7 @@ def eda_30sec_audiofiles_data():
     plt.yticks(fontsize = 10);
     plt.xlabel("Genre", fontsize = 15)
     plt.ylabel("BPM", fontsize = 15)
-    plt.savefig(plt_image_path+"BPM_Boxplot.jpg", dpi=300, bbox_inches="tight")
+    plt.savefig(plt_image_path+"BPM_Boxplot.png", dpi=300, bbox_inches="tight")
  
 # Principal Component Analysis - to visualize possible groups of genres¶
 # Normalization
@@ -256,7 +256,7 @@ def principal_component_analysis():
     plt.yticks(fontsize = 10);
     plt.xlabel("Principal Component 1", fontsize = 15)
     plt.ylabel("Principal Component 2", fontsize = 15)
-    plt.savefig(plt_image_path+"PCA_Scattert.jpg", dpi=300, bbox_inches="tight")
+    plt.savefig(plt_image_path+"PCA_Scattered.png", dpi=300, bbox_inches="tight")
  
 
 ##################### END OF METHOD ################## 
