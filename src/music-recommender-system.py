@@ -12,6 +12,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
 import IPython.display as ipd
 from IPython.display import Audio
 from sklearn.metrics.pairwise import cosine_similarity
@@ -25,6 +26,7 @@ import os
 
 audio_data_path = 'data/audio'
 output_path = 'output/'
+plt_image_path = output_path+'images/'
 # Load Data
 data = None
 X_train = None, 
@@ -244,7 +246,8 @@ def plotValidate(history, filename):
     print("Validation Accuracy",max(history.history["val_accuracy"]))
     pd.DataFrame(history.history).plot(figsize=(12,6))
     #plt.show()
-    plt.savefig("output/"+filename)
+    plt.title((os.path.splitext(filename)[0]).capitalize())
+    plt.savefig(plt_image_path+filename, dpi=300, bbox_inches="tight")
     plt.close()   
 
 #The loss is calculated using sparse_categorical_crossentropy function
@@ -264,6 +267,7 @@ def create_cnn_model():
     print(y_train_cnn)
 
     y_test_cnn = label_encoder.fit_transform(y_test)
+    print(X_train.head())
     print(y_test_cnn)
 
     X_train_cnn = X_train.astype('float32') / 255.0
@@ -289,7 +293,7 @@ def create_cnn_model():
 ])
     
     print(cnn_model.summary())
-    model_history = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=20, optimizer='adam')
+    model_history = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=1500, optimizer='adam')
     print(model_history)
     joblib.dump(cnn_model, "models/cnn_model.joblib")
     preds = cnn_model.predict(X_test_cnn)
@@ -311,7 +315,61 @@ def create_cnn_model():
         file.write(report)
     plotValidate(model_history, "cnn_history.png")
 
+def create_cnn_model_with_standardscaler():
+    data_cnn = pd.read_csv(f'{audio_data_path}/features_3_sec.csv')
+    data_cnn.head()
+    data_cnn = data_cnn.drop(labels='filename',axis=1)
+    data_cnn.head()
+    class_list = data_cnn.iloc[:, -1] #(Select last col only) 'label')
+    convertor = LabelEncoder()
+    #Fitting the label encoder & return encoded labels
+    y_transform = convertor.fit_transform(class_list)
+    #Standard scaler is used to standardize features & look like standard normally distributed data
+    fit = StandardScaler()
+    X_transform = fit.fit_transform(np.array(data_cnn.iloc[:, :-1], dtype = float))
+    
+    # Now Split
+    X_train_cnn, X_test_cnn, y_train_cnn, y_test_cnn = train_test_split(X_transform, y_transform, test_size=0.33)
+    cnn_model = keras.models.Sequential([
+    #keras.layers.Input(shape=(X_train_cnn.shape[1],)),
+    #keras.layers.Dense(512, activation="relu"),     
+    keras.layers.Dense(512, activation="relu", input_shape=(X_train_cnn.shape[1],)),
+    keras.layers.Dropout(0.2),
+    
+    keras.layers.Dense(256,activation="relu"),
+    keras.layers.Dropout(0.2),
+    
+    keras.layers.Dense(128,activation="relu"),
+    keras.layers.Dropout(0.2),
+    
+    keras.layers.Dense(64,activation="relu"),
+    keras.layers.Dropout(0.2),
+    
+    keras.layers.Dense(10, activation="softmax"),
+    
+    ])
+    print(cnn_model.summary())
 
+    model_history_standard_scaler = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=1500, optimizer='adam')
+    print(model_history_standard_scaler)
+    joblib.dump(cnn_model, "models/cnn_model_standard_scaler.joblib")
+    preds = cnn_model.predict(X_test_cnn)
+    print("CNN Predicts :")
+    print(preds)
+    test_loss, test_accuracy = cnn_model.evaluate(X_test_cnn, y_test_cnn, batch_size=128)
+    print("The test loss is :",test_loss)
+    print("\nThe test Accuracy is :",test_accuracy*100)
+    target_names = sorted(set(y_transform))
+    preds_class = np.argmax(preds, axis=1)  # converting back to unique class
+    report = classification_report(y_test_cnn, preds_class, labels=target_names)
+    print(f'Testing:\n {report}')
+    # Save the report to a text file
+    with open(output_path+"cnn_classification_report_scaler.txt", "w") as file:
+        file.write(report)
+    plotValidate(model_history_standard_scaler, "cnn_history_standrad_scaler.png")
+    
+    
+    
 def song_recommender_data():
     global similarity_df_names 
     # Read data
@@ -357,9 +415,10 @@ if __name__ == "__main__":
     load_data()
     print(data.head())
     ceate_features_target()
-    create_models()
-    create_xgboostmodels()
-    create_cnn_model()
+    #create_models()
+    #create_xgboostmodels()
+    #create_cnn_model()
+    create_cnn_model_with_standardscaler()
     song_recommender_data()
     find_similar_songs('pop.00019.wav')
     ipd.Audio(f'{audio_data_path}/genres_original/pop/pop.00019.wav') 
@@ -367,6 +426,6 @@ if __name__ == "__main__":
     audio_file = f'{audio_data_path}/genres_original/pop/pop.00023.wav'
 
     # Play the audio
-    Audio(audio_file)
-    extract_all_features(f'{audio_data_path}/genres_original/pop/pop.00023.wav')
+    #Audio(audio_file)
+    #extract_all_features(f'{audio_data_path}/genres_original/pop/pop.00023.wav')
    
