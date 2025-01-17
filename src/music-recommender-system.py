@@ -207,12 +207,12 @@ def create_models():
     # Putting all models in dictionary 
     model_dictionary[f"Decission_trees"] = decision_tree 
     model_dictionary[f"Random_Forest"] = randomforest 
-    model_dictionary[f"Naive_Bayes"] = naive_bayes 
-    model_dictionary[f"Stochastic_Gradient_Descent"] = knn
-    model_dictionary[f"KNN"] = sgd 
-    model_dictionary[f"Support_Vector_Machine"] = svm
-    model_dictionary[f"Logistic_Regression"] = logistic_reg
-    model_dictionary[f"Neural_Nets"] = neural_net_mlcp 
+    # model_dictionary[f"Naive_Bayes"] = naive_bayes 
+    # model_dictionary[f"Stochastic_Gradient_Descent"] = knn
+    # model_dictionary[f"KNN"] = sgd 
+    # model_dictionary[f"Support_Vector_Machine"] = svm
+    # model_dictionary[f"Logistic_Regression"] = logistic_reg
+    # model_dictionary[f"Neural_Nets"] = neural_net_mlcp 
 
     # Iterate over the dictionary
     for key, value in model_dictionary.items():
@@ -415,10 +415,10 @@ if __name__ == "__main__":
     load_data()
     print(data.head())
     ceate_features_target()
-    #create_models()
+    create_models()
     #create_xgboostmodels()
     #create_cnn_model()
-    create_cnn_model_with_standardscaler()
+    #create_cnn_model_with_standardscaler()
     song_recommender_data()
     find_similar_songs('pop.00019.wav')
     ipd.Audio(f'{audio_data_path}/genres_original/pop/pop.00019.wav') 

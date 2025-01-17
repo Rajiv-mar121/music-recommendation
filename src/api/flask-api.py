@@ -14,14 +14,14 @@ with open('model.pkl', 'rb') as model_file:
     model = pickle.load(model_file) """
 
 models_path = 'models'
-print(list(os.listdir(f'{models_path}/')))
+#print(list(os.listdir(f'{models_path}/')))
 # Load the trained model
-#cross_gradient_booster
-model = joblib.load('models/Knn.joblib')
+#cross_gradient_booster knn
+model = joblib.load('models/cross_gradient_booster.joblib')
 
 # Load audio 
 audio_data_path = 'data/audio'
-print(list(os.listdir(f'{audio_data_path}/')))
+#print(list(os.listdir(f'{audio_data_path}/')))
 
 # Sample GET endpoint
 @app.route('/api/data', methods=['GET'])
@@ -63,6 +63,7 @@ def predict():
     return jsonify(predictions.tolist())
 
 def extract_all_features(audio_path):
+    print("calling extarcting")
     #data_column = X.columns
     y, sr = librosa.load(audio_path)
     y, _ = librosa.effects.trim(y)

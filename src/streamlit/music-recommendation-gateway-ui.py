@@ -5,10 +5,16 @@ import numpy as np
 import pandas as pd
 import time
 import os
+import requests
 
 # Run UI
 # streamlit run .\src\streamlit\music-recommendation-gateway-ui.py
 # Set page configuration
+
+# Flask API base URL
+API_URL = "http://127.0.0.1:5000/api"
+image_path = "output/cnn_history.png"
+
 st.set_page_config(
     page_title="Multi-page Streamlit App",
     layout="wide"
@@ -161,16 +167,23 @@ def model_recommendation():
     tab1, tab2 = st.tabs(["Chart 1", "Chart 2"])
     
     with tab1:
-        st.header("Visualization Tab 1")
-        import numpy as np
-        import pandas as pd
-        
-        # Sample data for visualization
-        chart_data = pd.DataFrame(
-            np.random.randn(20, 3),
-            columns=['A', 'B', 'C']
-        )
-        st.line_chart(chart_data)
+        st.header("Music Recommendation and Genre Classification")
+
+        # Fetch data using a GET request
+        song_name = st.text_input("Enter the song name")
+        if st.button("Submit"):
+            try:
+                payload = {"song_name": song_name}
+                st.image(image_path, caption="CNN history", use_column_width=True)
+                response = requests.post(f"{API_URL}/recommend", json=payload)
+                if response.status_code == 200:
+                    st.success("song recommender initiated")
+                    st.json(response.json())
+                    #st.text_area(response.content)
+                else:
+                    st.error(f"Failed to send data: {response.status_code}")
+            except Exception as e:
+                st.error(f"Error: {e}")
         
         
         
