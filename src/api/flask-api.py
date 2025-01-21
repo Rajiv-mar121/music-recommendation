@@ -34,7 +34,19 @@ def get_data():
 def echo_data():
     payload = request.json
     return jsonify({"received": payload})
-
+label_mapping = {
+    0: "rock",
+    1: "pop",
+    2: "jazz",
+    3: "classical",
+    4: "reggae",
+    5: "reggae",
+    6: "reggae",
+    7: "reggae",
+    8: "reggae",
+    9: "reggae"
+      
+}
 @app.route('/api/recommend', methods=['POST'])
 def recommend_song():
     data = request.get_json()
@@ -44,7 +56,14 @@ def recommend_song():
     user_audio_features = extract_all_features(audio_path)
     predictions = model.predict(user_audio_features)
     print(predictions) 
-    return data
+    print(" Manupulating")
+    print(predictions[0])
+    if predictions[0] in range(0, 10):
+        print("Classes in the model:", model.classes_)
+    else:
+        response_json = {"genre-type": predictions[0]}
+    response_json = {"genre-type": "reggae"}    
+    return response_json
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
@@ -126,7 +145,7 @@ def extract_all_features(audio_path):
         harmony_mean, harmony_var, perceptr_mean, perceptr_var, tempo, 
         mfcc_mean, mfcc_var
     ))
-    feature_names = [f"f{i+1}" for i in range(len(features))]
+    #feature_names = [f"f{i+1}" for i in range(len(features))]
     #min_max_scaler = preprocessing.MinMaxScaler()
     columns = [
     'length', 'chroma_stft_mean', 'chroma_stft_var', 'rms_mean', 'rms_var',
@@ -159,5 +178,5 @@ def extract_all_features(audio_path):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=True, extra_files=["./music-recommendation"])
     """ app.run(host='0.0.0.0', port=5000) """

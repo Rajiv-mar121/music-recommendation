@@ -20,6 +20,7 @@ st.set_page_config(
     layout="wide"
 )
 image_base_dir = 'output/images/'
+classification_base_dir = 'output/'
 # Create horizontal navigation menu using streamlit-option-menu
 def navigation():
     selected = option_menu(
@@ -145,19 +146,40 @@ def model_analysis():
     st.title("Model Analysis")
     
     # Create tabs
-    tab1, tab2 = st.tabs(["Chart 1", "Chart 2"])
+    tab1, tab2 = st.tabs(["Classification Reports", "Best Models"])
     
     with tab1:
-        st.header("Visualization Tab 1")
+        st.header("All Models Performance Metrics")
         import numpy as np
         import pandas as pd
-        
+        if os.path.exists(classification_base_dir):
+            text_files = [f for f in os.listdir(classification_base_dir) if f.endswith(".txt")]
+                # Show the total number of text files
+            total_files = len(text_files)
+            st.subheader(f"Total Model found: {total_files}")
+            if text_files:
+                 for text_file in text_files:
+                     file_path = os.path.join(classification_base_dir, text_file)
+                     # Read the content of each text file
+                     with open(file_path, "r", encoding="utf-8") as file:
+                        content = file.read()
+                     file_name_without_extension = os.path.splitext(text_file)[0]   
+                     st.subheader(f"Model : {file_name_without_extension}")
+                     
+                     #st.text_area(f"Content of {text_file}", content, height=300)
+                     st.text_area(f"", content, height=300,  key=text_file, help="File content here", label_visibility="collapsed")
+                     #st.text(content)
+            else:
+                st.warning("No text files found in the specified directory.")
+
+        else:
+            st.error(f"Directory '{classification_base_dir}' does not exist.")
         # Sample data for visualization
-        chart_data = pd.DataFrame(
-            np.random.randn(20, 3),
-            columns=['A', 'B', 'C']
-        )
-        st.line_chart(chart_data)
+        # chart_data = pd.DataFrame(
+        #     np.random.randn(20, 3),
+        #     columns=['A', 'B', 'C']
+        # )
+        # st.line_chart(chart_data)
         
 # Model Analysis page content
 def model_recommendation():
@@ -179,6 +201,7 @@ def model_recommendation():
                 if response.status_code == 200:
                     st.success("song recommender initiated")
                     st.json(response.json())
+                    #st.write(f"The predicted genre is: **{response}**")
                     #st.text_area(response.content)
                 else:
                     st.error(f"Failed to send data: {response.status_code}")
