@@ -19,6 +19,10 @@ data = None
 def audio_data_exploration():
     global y, sr
     y, sr = librosa.load(f'{audio_data_path}/genres_original/reggae/reggae.00036.wav')
+    # Audio (y)  = sequence of vibrations in varying pressure strengths
+    # Sample rate(sr) = The sample rate (sr) refers to the number of audio samples captured per second, 
+    # expressed in Hz or kHz.
+    
     print('y:', y, '\n')
     print('y shape:', np.shape(y), '\n')
     print('Sample Rate (KHz):', sr, '\n')
