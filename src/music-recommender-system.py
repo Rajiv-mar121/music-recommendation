@@ -346,7 +346,11 @@ def create_cnn_model_with_standardscaler():
     keras.layers.Dropout(0.2),
     
     keras.layers.Dense(10, activation="softmax"),
-    
+    # 512 , 256,128, 64,10 are neurons
+    # 1 input layer, 3 hidden Layer , 1 output layer
+    # Dropout layers after each fully connected layer to prevent overfitting.
+    # The Rectified Linear Unit (ReLU) non-linearity and helps the model learn complex patterns. 
+    # It outputs max(0, x) for each input.
     ])
     print(cnn_model.summary())
 
