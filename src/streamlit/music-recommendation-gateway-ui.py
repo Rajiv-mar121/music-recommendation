@@ -6,6 +6,9 @@ import pandas as pd
 import time
 import os
 import requests
+import re
+import matplotlib.pyplot as plt
+import plotly.express as px
 
 # Run UI
 # streamlit run .\src\streamlit\music-recommendation-gateway-ui.py
@@ -147,28 +150,35 @@ def model_analysis():
     
     # Create tabs
     tab1, tab2 = st.tabs(["Classification Reports", "Best Models"])
-    
+    accuracy_data = []
     with tab1:
         st.header("All Models Performance Metrics")
-        import numpy as np
-        import pandas as pd
+
         if os.path.exists(classification_base_dir):
             text_files = [f for f in os.listdir(classification_base_dir) if f.endswith(".txt")]
                 # Show the total number of text files
             total_files = len(text_files)
             st.subheader(f"Total Model found: {total_files}")
+            
             if text_files:
                  for text_file in text_files:
                      file_path = os.path.join(classification_base_dir, text_file)
                      # Read the content of each text file
                      with open(file_path, "r", encoding="utf-8") as file:
                         content = file.read()
-                     file_name_without_extension = os.path.splitext(text_file)[0]   
+                     # Extracting accuracy ie :  accuracy                           0.67
+                     match = re.search(r'accuracy\s*(\d*\.\d+|\d+)', content)
+                     file_name_without_extension = os.path.splitext(text_file)[0]
+                     if match:
+                         accuracy = float(match.group(1))
+                         accuracy_data.append((file_name_without_extension, accuracy))
+                        
                      st.subheader(f"Model : {file_name_without_extension}")
                      
                      #st.text_area(f"Content of {text_file}", content, height=300)
                      st.text_area(f"", content, height=300,  key=text_file, help="File content here", label_visibility="collapsed")
                      #st.text(content)
+
             else:
                 st.warning("No text files found in the specified directory.")
 
@@ -180,7 +190,66 @@ def model_analysis():
         #     columns=['A', 'B', 'C']
         # )
         # st.line_chart(chart_data)
+    
+    with tab2:
+        st.header("Best Model ") 
+        accuracy_data.sort(key=lambda x: x[1], reverse=True)
+        # st.subheader("Top 3 Models with accuracy")
+        # for idx, (file, accuracy) in enumerate(accuracy_data[:3]):
+        #     st.write(f"{idx + 1}. {file} - Accuracy: {accuracy:.2f}") 
+            
+        df = pd.DataFrame(accuracy_data, columns=["Model", "Accuracy"])
+        df = df.sort_values(by="Accuracy", ascending=False)
         
+         # Show top 3 files
+        st.subheader("Top 3 Most Accurate Models are")
+        st.table(df.head(3))
+
+        
+        # Plot the graph
+        # st.subheader("Accuracy Graph")
+        # plt.figure(figsize=(8, 3))
+        # plt.bar(df["Model"], df["Accuracy"], color="skyblue")
+        # plt.xlabel("Models")
+        # plt.ylabel("Accuracy")
+        # plt.title("Accuracy of Models")
+        # plt.xticks(fontsize = 10)
+        # plt.xticks(rotation=60)
+        # st.pyplot(plt)
+        
+        fig = px.bar(
+            df,
+            x="Model",
+            y="Accuracy",
+            text="Accuracy",
+            color="Accuracy",
+            color_continuous_scale="Blues",
+            labels={"Accuracy": "Accuracy (%)"},
+            title="Accuracy by Models",
+        )
+
+        # Add percentage formatting to the tooltip and bar labels
+        fig.update_traces(
+            texttemplate="%{text:.2%}",  # Show percentages on the bars
+            hovertemplate="<b>%{x}</b><br>Accuracy: %{y:.2%}<extra></extra>",
+        )
+        # Customize layout for clarity and fit
+        fig.update_layout(
+            xaxis=dict(title="Models", tickangle=-45),
+            yaxis=dict(title="Accuracy"),
+            font=dict(size=18),
+            margin=dict(l=40, r=40, t=40, b=80),
+            height=800,
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+       
+        
+        # Display the table
+        st.subheader("Accuracy Data Table")
+        st.dataframe(df)
+        #st.dataframe(df.style.set_properties(**{"font-size": "18px"}))
+       
 # Model Analysis page content
 def model_recommendation():
     st.title("Model Recommendation")
