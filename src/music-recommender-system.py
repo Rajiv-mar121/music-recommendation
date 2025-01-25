@@ -372,7 +372,66 @@ def create_cnn_model_with_standardscaler():
         file.write(report)
     plotValidate(model_history_standard_scaler, "cnn_history_standrad_scaler.png")
     
+def create_cnn_model_with_custom(): 
+    data_cnn = pd.read_csv(f'{audio_data_path}/features_3_sec.csv')
+    #data_cnn.head()
+    data_cnn = data_cnn.drop(labels='filename',axis=1)
+    data_cnn.head()
+    class_list = data_cnn.iloc[:, -1] #(Select last col only) 'label')
+    convertor = LabelEncoder()
+    #Fitting the label encoder & return encoded labels
+    y_transform = convertor.fit_transform(class_list)
+    #Standard scaler is used to standardize features & look like standard normally distributed data
+    fit = StandardScaler()
+    X_transform = fit.fit_transform(np.array(data_cnn.iloc[:, :-1], dtype = float))
     
+    # Now Split
+    X_train_cnn, X_test_cnn, y_train_cnn, y_test_cnn = train_test_split(X_transform, y_transform, test_size=0.33)
+    cnn_model = keras.models.Sequential([
+        
+    # Added one more layer     and Batch normalization
+    # Experiment with batch size  32, 64, or 128
+    keras.layers.Dense(1024, activation="relu", input_shape=(X_train_cnn.shape[1],)),
+    #normalization after each dense layer to stabilize and accelerate training
+    keras.layers.BatchNormalization(),
+    keras.layers.Dropout(0.3),
+
+    #Add an L2 penalty to the weights to reduce overfitting:
+    keras.layers.Dense(512, activation="relu", kernel_regularizer=keras.regularizers.l2(0.001)),
+    keras.layers.BatchNormalization(),
+    keras.layers.Dropout(0.3),
+
+    keras.layers.Dense(256, activation="relu"),
+    keras.layers.BatchNormalization(),
+    keras.layers.Dropout(0.2),
+
+    keras.layers.Dense(128, activation="relu"),
+    keras.layers.BatchNormalization(),
+    keras.layers.Dropout(0.2),
+
+    keras.layers.Dense(10, activation="softmax"),
+    
+    
+    ]) 
+    print(cnn_model.summary())
+    optimizer = keras.optimizers.AdamW(learning_rate=0.001)
+    model_history_standard_scaler = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=1500, optimizer=optimizer)
+    print(model_history_standard_scaler)
+    joblib.dump(cnn_model, "models/cnn_model_standard_scaler_custom.joblib")
+    preds = cnn_model.predict(X_test_cnn)
+    print("CNN Custom Predicts :")
+    print(preds)
+    test_loss, test_accuracy = cnn_model.evaluate(X_test_cnn, y_test_cnn, batch_size=128)
+    print("The test loss is :",test_loss)
+    print("\nThe test Accuracy is :",test_accuracy*100)
+    target_names = sorted(set(y_transform))
+    preds_class = np.argmax(preds, axis=1)  # converting back to unique class
+    report = classification_report(y_test_cnn, preds_class, labels=target_names)
+    print(f'Testing:\n {report}')
+    # Save the report to a text file
+    with open(output_path+"cnn_classification_report_custom.txt", "w") as file:
+        file.write(report)
+    plotValidate(model_history_standard_scaler, "cnn_history_standrad_scaler_custom.png") 
     
 def song_recommender_data():
     global similarity_df_names 
@@ -419,10 +478,11 @@ if __name__ == "__main__":
     load_data()
     print(data.head())
     ceate_features_target()
-    create_models()
+    #create_models()
     #create_xgboostmodels()
     #create_cnn_model()
     #create_cnn_model_with_standardscaler()
+    create_cnn_model_with_custom()
     song_recommender_data()
     find_similar_songs('pop.00019.wav')
     ipd.Audio(f'{audio_data_path}/genres_original/pop/pop.00019.wav') 

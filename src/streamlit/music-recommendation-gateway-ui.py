@@ -255,7 +255,7 @@ def model_recommendation():
     st.title("Model Recommendation")
     
     # Create tabs
-    tab1, tab2 = st.tabs(["Chart 1", "Chart 2"])
+    tab1, tab2 = st.tabs(["Genre Pridiction", "Chart 2"])
     
     with tab1:
         st.header("Music Recommendation and Genre Classification")
@@ -277,8 +277,23 @@ def model_recommendation():
             except Exception as e:
                 st.error(f"Error: {e}")
         
-        
-        
+        with st.form("model_form", clear_on_submit=True):
+            st.write("Model Selection Form:")
+    
+            # Dropdown box
+            options = ["Xg Boost", "Random Forest", "Decion Tree", "CNN", "KNN"]
+            selected_option = st.selectbox("Choose an model:", options,index=None,
+                placeholder="...PlEASE SELECT...",)
+            
+            # Text input box
+            user_input = st.text_input("Enter song name:")
+            
+            uploaded_file = st.file_uploader("Upload a sound file (MP3/WAV):", type=["mp3", "wav"])
+            # Submit button
+            submit_button = st.form_submit_button("Submit")   
+        if submit_button:
+            st.write(f"You selected: {selected_option}")
+            st.write(f"Your input: {user_input}")        
 # Main app
 def main():
     # Handle navigation
