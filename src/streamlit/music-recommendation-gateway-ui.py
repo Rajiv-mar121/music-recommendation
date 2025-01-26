@@ -281,19 +281,41 @@ def model_recommendation():
             st.write("Model Selection Form:")
     
             # Dropdown box
-            options = ["Xg Boost", "Random Forest", "Decion Tree", "CNN", "KNN"]
-            selected_option = st.selectbox("Choose an model:", options,index=None,
+            options = ["CNN (Standard)","CNN (Custom)", "Random Forest", "XG Boost", "Decission Tree", "KNN","Logistic Regression","Naive Bayes","Neural Net","Stochastic Gradient Descent","Support Vector Machine"]
+            selected_model = st.selectbox("Choose an model:", options,index=None,
                 placeholder="...PlEASE SELECT...",)
             
             # Text input box
-            user_input = st.text_input("Enter song name:")
+            #user_input = st.text_input("Enter song name:")
             
             uploaded_file = st.file_uploader("Upload a sound file (MP3/WAV):", type=["mp3", "wav"])
             # Submit button
-            submit_button = st.form_submit_button("Submit")   
-        if submit_button:
-            st.write(f"You selected: {selected_option}")
-            st.write(f"Your input: {user_input}")        
+            submit_button = st.form_submit_button("Submit")
+            
+        if uploaded_file:
+            st.write(f"Uploaded file: {uploaded_file.name}")   
+            if submit_button:
+                st.write(f"You selected: {selected_model}")
+                #st.write(f"Your input: {user_input}") 
+                model_data = {
+                    "model_name": selected_model
+                }  
+                files = {
+                    "file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)
+                }
+                try:   
+                    response = requests.post(f"{API_URL}/recommend", files=files, data=model_data)
+                    with st.spinner('Loading Please wait...'):
+                        time.sleep(3)
+                    if response.status_code == 200:
+                        st.success("song recommender initiated")
+                        st.json(response.json())
+                        #st.write(f"The predicted genre is: **{response}**")
+                        #st.text_area(response.content)
+                    else:
+                        st.error(f"Failed to send data: {response.status_code}")
+                except Exception as e:
+                    st.error(f"Error: {e}")     
 # Main app
 def main():
     # Handle navigation

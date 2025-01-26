@@ -376,21 +376,29 @@ def create_cnn_model_with_custom():
     data_cnn = pd.read_csv(f'{audio_data_path}/features_3_sec.csv')
     #data_cnn.head()
     data_cnn = data_cnn.drop(labels='filename',axis=1)
+    #data_cnn = data_cnn.drop(labels='length',axis=1)
     data_cnn.head()
     class_list = data_cnn.iloc[:, -1] #(Select last col only) 'label')
     convertor = LabelEncoder()
     #Fitting the label encoder & return encoded labels
     y_transform = convertor.fit_transform(class_list)
     #Standard scaler is used to standardize features & look like standard normally distributed data
-    fit = StandardScaler()
-    X_transform = fit.fit_transform(np.array(data_cnn.iloc[:, :-1], dtype = float))
     
+    ## Saving encoder
+    joblib.dump(convertor, "models/encoder_cnn_model_standard_scaler_custom.joblib")
+    original_labels = convertor.inverse_transform(y_transform)
+    print("Decoded labels:", original_labels)
+    standard_scaler = StandardScaler()
+    X_transform = standard_scaler.fit_transform(np.array(data_cnn.iloc[:, :-1], dtype = float))
+    ## Save standrad scaler
+    joblib.dump(standard_scaler, "models/scaler_cnn_model_standard_scaler_custom.joblib")
     # Now Split
     X_train_cnn, X_test_cnn, y_train_cnn, y_test_cnn = train_test_split(X_transform, y_transform, test_size=0.33)
     cnn_model = keras.models.Sequential([
         
     # Added one more layer     and Batch normalization
     # Experiment with batch size  32, 64, or 128
+    #X_train_cnn.shape[1] corresponds to num_features
     keras.layers.Dense(1024, activation="relu", input_shape=(X_train_cnn.shape[1],)),
     #normalization after each dense layer to stabilize and accelerate training
     keras.layers.BatchNormalization(),
@@ -417,7 +425,8 @@ def create_cnn_model_with_custom():
     optimizer = keras.optimizers.AdamW(learning_rate=0.001)
     model_history_standard_scaler = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=1500, optimizer=optimizer)
     print(model_history_standard_scaler)
-    joblib.dump(cnn_model, "models/cnn_model_standard_scaler_custom.joblib")
+    #joblib.dump(cnn_model, "models/cnn_model_standard_scaler_custom.joblib")
+    cnn_model.save("models/cnn_model_standard_scaler_custom.h5")
     preds = cnn_model.predict(X_test_cnn)
     print("CNN Custom Predicts :")
     print(preds)
@@ -467,6 +476,19 @@ def find_similar_songs(song_file_name):
     print("\n*******\nSimilar songs to ", song_file_name)
     print(series.head(5))
 
+def print_label(): 
+    data_cnn = pd.read_csv(f'{audio_data_path}/features_3_sec.csv')
+    #data_cnn.head()
+    data_cnn = data_cnn.drop(labels='filename',axis=1)
+    data_cnn.head()
+    class_list = data_cnn.iloc[:, -1] #(Select last col only) 'label')
+    convertor = LabelEncoder()
+    #Fitting the label encoder & return encoded labels
+    y_transform = convertor.fit_transform(class_list)
+    #Standard scaler is used to standardize features & look like standard normally distributed data
+    original_labels = convertor.inverse_transform(y_transform)
+    print("Decoded labels:", original_labels)
+    
 # print(list(os.listdir(f'{audio_data_path}/genres_original/')))
 
 
@@ -483,6 +505,7 @@ if __name__ == "__main__":
     #create_cnn_model()
     #create_cnn_model_with_standardscaler()
     create_cnn_model_with_custom()
+    #print_label()
     song_recommender_data()
     find_similar_songs('pop.00019.wav')
     ipd.Audio(f'{audio_data_path}/genres_original/pop/pop.00019.wav') 
