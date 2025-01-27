@@ -259,23 +259,6 @@ def model_recommendation():
     
     with tab1:
         st.header("Music Recommendation and Genre Classification")
-
-        # Fetch data using a GET request
-        song_name = st.text_input("Enter the song name")
-        if st.button("Submit"):
-            try:
-                payload = {"song_name": song_name}
-                st.image(image_path, caption="CNN history", use_column_width=True)
-                response = requests.post(f"{API_URL}/recommend", json=payload)
-                if response.status_code == 200:
-                    st.success("song recommender initiated")
-                    st.json(response.json())
-                    #st.write(f"The predicted genre is: **{response}**")
-                    #st.text_area(response.content)
-                else:
-                    st.error(f"Failed to send data: {response.status_code}")
-            except Exception as e:
-                st.error(f"Error: {e}")
         
         with st.form("model_form", clear_on_submit=True):
             st.write("Model Selection Form:")

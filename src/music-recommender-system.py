@@ -23,6 +23,8 @@ import matplotlib.pyplot as plt
 import joblib
 import os
 
+##Execute
+# python .\src\music-recommender-system.py
 
 audio_data_path = 'data/audio'
 output_path = 'output/'
@@ -64,6 +66,11 @@ def ceate_features_target():
     # Split data into train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     print(len(X_train))
+    print("X_train_cnn.shape[1] = ", X_train.shape[1])
+    print("X_train_cnn.shape = ", X_train.shape)
+    ## output 
+    ## X_train_cnn.shape[1] =  58
+    ## X_train_cnn.shape =  (6993, 58)
     print(len(y_train))
     print(type(X))
     
@@ -228,8 +235,10 @@ def create_xgboostmodels():
     print(y_train_encoded)
 
     # Transform the test labels (if needed)
-    y_test_encoded = label_encoder.transform(y_test) 
-
+    #y_test_encoded = label_encoder.transform(y_test) 
+    y_test_encoded = label_encoder.fit_transform(y_test) 
+    ## Saving encoder
+    joblib.dump(label_encoder, "models/encoder_xgboost.joblib")
     # Cross Gradient Booster
     xgb = XGBClassifier(n_estimators=1000, learning_rate=0.05)
     fit_and_save_models_xgboost(xgb, X_train, y_train_encoded,y_test_encoded,"Cross_Gradient_Booster")
@@ -398,7 +407,8 @@ def create_cnn_model_with_custom():
         
     # Added one more layer     and Batch normalization
     # Experiment with batch size  32, 64, or 128
-    #X_train_cnn.shape[1] corresponds to num_features
+    
+    #X_train_cnn.shape[1] corresponds to num_features like cloumn here it is 58 columns
     keras.layers.Dense(1024, activation="relu", input_shape=(X_train_cnn.shape[1],)),
     #normalization after each dense layer to stabilize and accelerate training
     keras.layers.BatchNormalization(),

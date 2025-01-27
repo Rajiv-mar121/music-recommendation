@@ -53,19 +53,7 @@ def get_data():
 def echo_data():
     payload = request.json
     return jsonify({"received": payload})
-label_mapping = {
-    0: "rock",
-    1: "pop",
-    2: "jazz",
-    3: "classical",
-    4: "reggae",
-    5: "reggae",
-    6: "reggae",
-    7: "reggae",
-    8: "reggae",
-    9: "reggae"
-      
-}
+
 @app.route('/api/recommend', methods=['POST'])
 def recommend_genre():
     print("Inside API")
@@ -91,16 +79,26 @@ def recommend_genre():
     if(model_name == "CNN (Custom)"):
         scaler = joblib.load("models/scaler_cnn_model_standard_scaler_custom.joblib")
         encoder = joblib.load("models/encoder_cnn_model_standard_scaler_custom.joblib")
-        user_audio_features_array = user_audio_features.to_numpy()
-        reshaped_features = user_audio_features_array.reshape(1, -1)
+        #user_audio_features_array = user_audio_features.to_numpy()
+        #reshaped_features = user_audio_features_array.reshape(1, -1)
         #user_audio_features = user_audio_features.reshape(1, -1)
         # Standardize features using the saved scaler
-        features_scaled = scaler.transform(reshaped_features)
-        predictions = model.predict(features_scaled)
-        predicted_class_index = np.argmax(predictions, axis=1)[0]
-        predicted_genre = encoder.inverse_transform([predicted_class_index])[0]
-        print("CNN genre "+predicted_genre)
-        response_json = {"genre-type": predicted_genre}
+        #features_scaled = scaler.transform(reshaped_features)
+        
+        features_transformed = scaler.fit_transform(np.array(user_audio_features, dtype = float))
+        
+        # Below 2 lines are also working but 
+        #user_audio_features_np = user_audio_features.to_numpy()
+        #features_transformed = user_audio_features_np.reshape(1, 58)
+        predictions = model.predict(features_transformed)
+        print(predictions)
+        # predicted_class_index = np.argmax(predictions, axis=1)[0]
+        # predicted_genre = encoder.inverse_transform([predicted_class_index])[0]
+        predicted_class_index = np.argmax(predictions, axis=1)
+        print("CNN predicted_class_index ",predicted_class_index)
+        predicted_genre = encoder.inverse_transform(predicted_class_index)
+        print("CNN genre ",predicted_genre)
+        response_json = {"genre-type": predicted_genre[0]}
         return response_json
         
     else:     
@@ -111,11 +109,17 @@ def recommend_genre():
         print(predictions[0])
         if predictions[0] in range(0, 10):
             print("Classes in the model:", model.classes_)
+            label_encoder = joblib.load("models/encoder_xgboost.joblib")
+           # predicted_class_index = np.argmax(predictions, axis=1)[0]
+            predicted_genre = label_encoder.inverse_transform(predictions)
+            print("Xgboost genre "+predicted_genre)
+            response_json = {"genre-type": predicted_genre[0]}  
+            
         else:
             response_json = {"genre-type": predictions[0]}
             return response_json
 
-        response_json = {"genre-type": "reggae-hardcoded"}    
+        #response_json = {"genre-type": "reggae-hardcoded"}    
         return response_json
 
 @app.route('/api/predict', methods=['POST'])
@@ -146,10 +150,10 @@ def extract_all_features(audio_path):
     y, sr = librosa.load(audio_bytes, sr=None)
     y, _ = librosa.effects.trim(y)
     duration = librosa.get_duration(y=y, sr=sr)
-    duration = 66149
-    print(np.shape(y))
-    my_duration = 661794/sr
-    print(my_duration)
+    #duration = 66149
+    #print(np.shape(y))
+    #my_duration = 661794/sr
+    #print(my_duration)
     print(duration)
     # Chroma
     chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
