@@ -19,9 +19,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 from xgboost import XGBClassifier, XGBRFClassifier
 from tensorflow import keras
 from keras.models import Sequential
+from tensorflow.keras.utils import plot_model
 import matplotlib.pyplot as plt
 import joblib
 import os
+import io
+from contextlib import redirect_stdout
 
 ##Execute
 # python .\src\music-recommender-system.py
@@ -299,7 +302,7 @@ def create_cnn_model():
     
     keras.layers.Dense(10, activation="softmax"),
     
-])
+    ])
     
     print(cnn_model.summary())
     model_history = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=1500, optimizer='adam')
@@ -383,6 +386,9 @@ def create_cnn_model_with_standardscaler():
     
 def create_cnn_model_with_custom(): 
     data_cnn = pd.read_csv(f'{audio_data_path}/features_3_sec.csv')
+    data1_cnn = pd.read_csv(f'{audio_data_path}/audio_features_with_genres.csv')
+    data_cnn = pd.concat([data_cnn, data1_cnn], ignore_index=True)
+    print(data_cnn.shape)
     #data_cnn.head()
     data_cnn = data_cnn.drop(labels='filename',axis=1)
     #data_cnn = data_cnn.drop(labels='length',axis=1)
@@ -407,17 +413,18 @@ def create_cnn_model_with_custom():
         
     # Added one more layer     and Batch normalization
     # Experiment with batch size  32, 64, or 128
-    
+    # keras.layers.Dense(512, activation="relu", input_shape=(X_train_cnn.shape[1],)),
     #X_train_cnn.shape[1] corresponds to num_features like cloumn here it is 58 columns
     keras.layers.Dense(1024, activation="relu", input_shape=(X_train_cnn.shape[1],)),
     #normalization after each dense layer to stabilize and accelerate training
+    #normalize the inputs to a layer, stabilizing the learning process and improving convergence speed.
     keras.layers.BatchNormalization(),
-    keras.layers.Dropout(0.3),
+    keras.layers.Dropout(0.3), # networks to prevent overfitting. 30% neuron are dropped
 
-    #Add an L2 penalty to the weights to reduce overfitting:
-    keras.layers.Dense(512, activation="relu", kernel_regularizer=keras.regularizers.l2(0.001)),
+    #Add an L2 penalty to the weights to reduce overfitting: , kernel_regularizer=keras.regularizers.l2(0.001)
+    keras.layers.Dense(512, activation="relu"),
     keras.layers.BatchNormalization(),
-    keras.layers.Dropout(0.3),
+    keras.layers.Dropout(0.3), 
 
     keras.layers.Dense(256, activation="relu"),
     keras.layers.BatchNormalization(),
@@ -430,16 +437,23 @@ def create_cnn_model_with_custom():
     keras.layers.Dense(10, activation="softmax"),
     
     
-    ]) 
-    print(cnn_model.summary())
+    ])
+    cnn_summary = cnn_model.summary() 
+    #print(cnn_summary)
+    # with open(output_path+'cnn_custom_architecture.txt','a') as f:
+    #     print(cnn_summary, file=f)
+    with open(output_path+'cnn_custom_architecture.txt','w') as f:
+        with redirect_stdout(f):
+            cnn_model.summary()
+    #plot_model(cnn_model, to_file=plt_image_path+"cnn_custom_architecture.png", show_shapes=True, show_layer_names=True)
     optimizer = keras.optimizers.AdamW(learning_rate=0.001)
     model_history_standard_scaler = trainNeuralModel(cnn_model, X_train_cnn, y_train_cnn, X_test_cnn , y_test_cnn, epochs=1500, optimizer=optimizer)
     print(model_history_standard_scaler)
     #joblib.dump(cnn_model, "models/cnn_model_standard_scaler_custom.joblib")
-    cnn_model.save("models/cnn_model_standard_scaler_custom.h5")
+    #cnn_model.save("models/cnn_model_standard_scaler_custom.h5")
+    cnn_model.save("models/cnn_model_standard_scaler_custom.keras")
     preds = cnn_model.predict(X_test_cnn)
-    print("CNN Custom Predicts :")
-    print(preds)
+    print("CNN Custom Predicts :", preds)
     test_loss, test_accuracy = cnn_model.evaluate(X_test_cnn, y_test_cnn, batch_size=128)
     print("The test loss is :",test_loss)
     print("\nThe test Accuracy is :",test_accuracy*100)
@@ -499,6 +513,47 @@ def print_label():
     original_labels = convertor.inverse_transform(y_transform)
     print("Decoded labels:", original_labels)
     
+def get_cnn_model():
+    data_cnn = pd.read_csv(f'{audio_data_path}/features_3_sec.csv')
+    print(data_cnn.shape)
+    data1_cnn = pd.read_csv(f'{audio_data_path}/audio_features_with_genres.csv')
+    data_cnn = pd.concat([data_cnn, data1_cnn], ignore_index=True)
+    print(data_cnn.head())
+    
+    print(data_cnn.shape)
+    cnn_model = keras.models.Sequential([
+        
+    # Added one more layer     and Batch normalization
+    # Experiment with batch size  32, 64, or 128
+    # keras.layers.Dense(512, activation="relu", input_shape=(X_train_cnn.shape[1],)),
+    #X_train_cnn.shape[1] corresponds to num_features like cloumn here it is 58 columns
+    keras.layers.Dense(1024, activation="relu", input_shape=(58,)),
+    #normalization after each dense layer to stabilize and accelerate training
+    #normalize the inputs to a layer, stabilizing the learning process and improving convergence speed.
+    keras.layers.BatchNormalization(),
+    keras.layers.Dropout(0.3), # networks to prevent overfitting. 30% neuron are dropped
+
+    #Add an L2 penalty to the weights to reduce overfitting: , kernel_regularizer=keras.regularizers.l2(0.001)
+    keras.layers.Dense(512, activation="relu"),
+    keras.layers.BatchNormalization(),
+    keras.layers.Dropout(0.3), 
+
+    keras.layers.Dense(256, activation="relu"),
+    keras.layers.BatchNormalization(),
+    keras.layers.Dropout(0.2),
+
+    keras.layers.Dense(128, activation="relu"),
+    keras.layers.BatchNormalization(),
+    keras.layers.Dropout(0.2),
+
+    keras.layers.Dense(10, activation="softmax"), 
+    ])
+    cnn_summary = cnn_model.summary() 
+    #print(cnn_summary)
+    # with open(output_path+'cnn_custom_architecture.txt','w') as f:
+    #     with redirect_stdout(f):
+    #         cnn_model.summary()
+    
 # print(list(os.listdir(f'{audio_data_path}/genres_original/')))
 
 
@@ -516,9 +571,10 @@ if __name__ == "__main__":
     #create_cnn_model_with_standardscaler()
     create_cnn_model_with_custom()
     #print_label()
+    #get_cnn_model()
     song_recommender_data()
     find_similar_songs('pop.00019.wav')
-    ipd.Audio(f'{audio_data_path}/genres_original/pop/pop.00019.wav') 
+    #ipd.Audio(f'{audio_data_path}/genres_original/pop/pop.00019.wav') 
     # Specify the path to the audio file
     audio_file = f'{audio_data_path}/genres_original/pop/pop.00023.wav'
 

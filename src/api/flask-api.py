@@ -19,7 +19,9 @@ models_path = 'models/'
 model_dictionary = {}
 model_dictionary[f"Random Forest"] = models_path+'random_forest.joblib' 
 model_dictionary[f"CNN (Standard)"] = models_path+'cnn_model_standard_scaler.joblib' 
-model_dictionary[f"CNN (Custom)"] = models_path+'cnn_model_standard_scaler_custom.h5' 
+#model_dictionary[f"CNN (Custom)"] = models_path+'cnn_model_standard_scaler_custom.h5' 
+model_dictionary[f"CNN (Custom)"] = models_path+'cnn_model_standard_scaler_custom.keras'
+
 model_dictionary[f"XG Boost"] = models_path+'cross_gradient_booster.joblib' 
 model_dictionary[f"Decission Tree"] = models_path+'decission_trees.joblib' 
 model_dictionary[f"KNN"] = models_path+'knn.joblib' 
@@ -69,8 +71,9 @@ def recommend_genre():
     for key, value in model_dictionary.items():
         if(key == model_name):
             if(model_name == "CNN (Custom)"):
-                print("CNN (Custom) found")
+                print("CNN (Custom) found loading", value)
                 model = load_model(value)  
+                
             else:
                 model = joblib.load(value)
             
@@ -85,13 +88,22 @@ def recommend_genre():
         # Standardize features using the saved scaler
         #features_scaled = scaler.transform(reshaped_features)
         
-        features_transformed = scaler.fit_transform(np.array(user_audio_features, dtype = float))
+        features_transformed = scaler.transform(np.array(user_audio_features, dtype = float).reshape(1, -1))
+        print("UI reshaped: ",features_transformed)
         
         # Below 2 lines are also working but 
         #user_audio_features_np = user_audio_features.to_numpy()
         #features_transformed = user_audio_features_np.reshape(1, 58)
-        predictions = model.predict(features_transformed)
-        print(predictions)
+        print(len(user_audio_features))
+        feat = [66149,0.3354063630104065,0.09104829281568527,0.1304050236940384,0.0035210042260587215,1773.0650319904662,167541.6308686573,1972.7443881356735,117335.77156332089,3714.560359074519,1080789.8855805045,0.08185096153846154,0.0005576872402394312,-7.848480163374916e-05,0.008353590033948421,-6.816183304181322e-05,0.005535192787647247,129.19921875,-118.62791442871094,2440.28662109375,125.08362579345703,260.9569091796875,-23.443723678588867,364.08172607421875,41.32148361206055,181.69485473632812,-5.976108074188232,152.963134765625,20.115140914916992,75.65229797363281,-16.04541015625,40.22710418701172,17.85519790649414,84.32028198242188,-14.633434295654297,83.4372329711914,10.270526885986328,97.00133514404297,-9.70827865600586,66.66989135742188,10.18387508392334,45.10361099243164,-4.681614398956299,34.169498443603516,8.417439460754395,48.26944351196289,-7.233476638793945,42.77094650268555,-2.8536033630371094,39.6871452331543,-3.2412803173065186,36.488243103027344,0.7222089767456055,38.099151611328125,-5.05033540725708,33.618072509765625,-0.24302679300308228,43.771766662597656]
+
+        #feat = scaler.transform(np.array(feat, dtype = float).reshape(1, -1))
+        #print("hardcoded reshaped : ",feat)
+        #print(len(feat))
+        # predictions = model.predict(np.array(feat, dtype = float).reshape(1, 58))
+        # print("Harcoded Predic: ",predictions)
+        predictions = model.predict(np.array(features_transformed, dtype = float).reshape(1, 58))
+        print("UI predic: ",predictions)
         # predicted_class_index = np.argmax(predictions, axis=1)[0]
         # predicted_genre = encoder.inverse_transform([predicted_class_index])[0]
         predicted_class_index = np.argmax(predictions, axis=1)
@@ -147,14 +159,15 @@ def extract_all_features(audio_path):
     # Convert the file to a BytesIO object
     audio_bytes = BytesIO(audio_path.read())
     #, duration=3
-    y, sr = librosa.load(audio_bytes, sr=None)
+    y, sr = librosa.load(audio_bytes, sr=None, duration=3)
     y, _ = librosa.effects.trim(y)
-    duration = librosa.get_duration(y=y, sr=sr)
+    #duration = librosa.get_duration(y=y, sr=sr)
     #duration = 66149
     #print(np.shape(y))
     #my_duration = 661794/sr
     #print(my_duration)
-    print(duration)
+    duration = len(y)
+    
     # Chroma
     chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
     chroma_stft_mean = np.mean(chroma_stft)

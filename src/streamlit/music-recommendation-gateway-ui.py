@@ -202,8 +202,8 @@ def model_analysis():
         df = df.sort_values(by="Accuracy", ascending=False)
         
          # Show top 3 files
-        st.subheader("Top 3 Most Accurate Models are")
-        st.table(df.head(3))
+        st.subheader("Top 4 Most Accurate Models are")
+        st.table(df.head(4))
 
         
         # Plot the graph

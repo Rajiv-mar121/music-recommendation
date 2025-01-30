@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from sklearn.decomposition import PCA
 import seaborn as sns
+import os
+from tqdm import tqdm
 
 
 
@@ -261,7 +263,142 @@ def principal_component_analysis():
     plt.xlabel("Principal Component 1", fontsize = 15)
     plt.ylabel("Principal Component 2", fontsize = 15)
     plt.savefig(plt_image_path+"PCA_Scattered.png", dpi=300, bbox_inches="tight")
+    
+
+def read_all_audiofile_extarct_fetaure():
+    root_folder_path = "data/audio/extract/"
+    data = []
+    feature_list = []
+    file_names = []
+    for file_name in tqdm(os.listdir(root_folder_path)):
+        if file_name.endswith(".wav"):
+            file_path = os.path.join(root_folder_path, file_name)
+            # Extract features
+            features = extract_all_features(file_path)
+            if features is not None:
+                data.append([file_name] + features.tolist())
+                #feature_list.append(features)
+                #file_names.append(file_name)
+                
+    # Convert to a Pandas DataFrame
+    #feature_df = pd.DataFrame(feature_list)
+    #feature_df.insert(0, "filename", file_names)
+    # Save the features to a CSV file
+    #feature_df.to_csv("audio_features.csv", index=False)
+
+    
+            
+    # for root, dirs, files in os.walk(root_folder_path):
+    #     for file_name in files:
+    #         if file_name.endswith(".wav") or file_name.endswith(".mp3"):  # Adjust for your audio formats
+    #             file_path = os.path.join(root, file_name)
+
+    #             # Extract genre from folder name (assumes folder names are genres)
+    #             genre = os.path.basename(root)
+    #             print(f"Processing file: {file_name} | Genre: {genre}")
+
+    #             # Extract features
+    #             features = extract_all_features(file_path)
+               
+
+    #             if features is not None:
+    #                 # Append the genre, file name, and features to the list
+    #                 data.append([file_name] + features.tolist())
+                    
+    
+               
+    columns = [
+        'filename','length', 'chroma_stft_mean', 'chroma_stft_var', 'rms_mean', 'rms_var',
+        'spectral_centroid_mean', 'spectral_centroid_var',
+        'spectral_bandwidth_mean', 'spectral_bandwidth_var', 'rolloff_mean',
+        'rolloff_var', 'zero_crossing_rate_mean', 'zero_crossing_rate_var',
+        'harmony_mean', 'harmony_var', 'perceptr_mean', 'perceptr_var', 'tempo',
+        'mfcc1_mean', 'mfcc1_var', 'mfcc2_mean', 'mfcc2_var', 'mfcc3_mean',
+        'mfcc3_var', 'mfcc4_mean', 'mfcc4_var', 'mfcc5_mean', 'mfcc5_var',
+        'mfcc6_mean', 'mfcc6_var', 'mfcc7_mean', 'mfcc7_var', 'mfcc8_mean',
+        'mfcc8_var', 'mfcc9_mean', 'mfcc9_var', 'mfcc10_mean', 'mfcc10_var',
+        'mfcc11_mean', 'mfcc11_var', 'mfcc12_mean', 'mfcc12_var', 'mfcc13_mean',
+        'mfcc13_var', 'mfcc14_mean', 'mfcc14_var', 'mfcc15_mean', 'mfcc15_var',
+        'mfcc16_mean', 'mfcc16_var', 'mfcc17_mean', 'mfcc17_var', 'mfcc18_mean',
+        'mfcc18_var', 'mfcc19_mean', 'mfcc19_var', 'mfcc20_mean', 'mfcc20_var','label'
+    ]
+    df = pd.DataFrame(data, columns=columns)
+    # Save to CSV
+    output_csv = "data/audio/audio_features_with_genres.csv"
+    df.to_csv(output_csv, index=False)
+    print("Feature extraction complete. Data saved to 'audio_features_with_genres.csv'.")
+
+
  
+def extract_all_features(audio_path):
+    print("calling extarcting")
+    genre_type = os.path.basename(audio_path).split('.')[0]
+    #print("genre",genre_type)
+    y, sr = librosa.load(audio_path ,sr=None, duration=3)
+    y, _ = librosa.effects.trim(y)
+    duration = len(y)
+
+    # Chroma
+    chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
+    chroma_stft_mean = np.mean(chroma_stft)
+    chroma_stft_var = np.var(chroma_stft)
+
+    # RMS
+    rms = librosa.feature.rms(y=y)
+    rms_mean = np.mean(rms)
+    rms_var = np.var(rms)
+
+    # Spectral Centroid
+    spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
+    spectral_centroid_mean = np.mean(spectral_centroid)
+    spectral_centroid_var = np.var(spectral_centroid)
+
+    # Spectral Bandwidth
+    spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr)
+    spectral_bandwidth_mean = np.mean(spectral_bandwidth)
+    spectral_bandwidth_var = np.var(spectral_bandwidth)
+
+    # Spectral Rolloff
+    rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
+    rolloff_mean = np.mean(rolloff)
+    rolloff_var = np.var(rolloff)
+
+    # Zero Crossing Rate
+    zero_crossing_rate = librosa.feature.zero_crossing_rate(y=y)
+    zero_crossing_rate_mean = np.mean(zero_crossing_rate)
+    zero_crossing_rate_var = np.var(zero_crossing_rate)
+
+    # Harmonic and Percussive
+    harmony, perc = librosa.effects.hpss(y)
+    harmony_mean = np.mean(harmony)
+    harmony_var = np.var(harmony)
+    perceptr_mean = np.mean(perc)
+    perceptr_var = np.var(perc)
+
+    # Tempo
+    onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+    tempo, _ = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
+   
+
+    # MFCCs
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
+    mfcc_mean = np.mean(mfcc, axis=1)
+    mfcc_var = np.var(mfcc, axis=1)
+    #print(mfcc_mean)
+    #print(mfcc_var)
+
+    # Combine all features into a single vector 19 features
+    features = np.hstack((
+        duration, chroma_stft_mean, chroma_stft_var, rms_mean, rms_var, 
+        spectral_centroid_mean, spectral_centroid_var, spectral_bandwidth_mean, spectral_bandwidth_var, 
+        rolloff_mean, rolloff_var, zero_crossing_rate_mean, zero_crossing_rate_var,
+        harmony_mean, harmony_var, perceptr_mean, perceptr_var, tempo, 
+        mfcc_mean, mfcc_var, genre_type
+    ))
+
+    #print(features)
+    #print(x_test.iloc[0:4])
+    return features
 
 ##################### END OF METHOD ################## 
  
@@ -271,7 +408,8 @@ def principal_component_analysis():
 
 if __name__ == "__main__":
     print("Audio file analysis initiated")
-    audio_data_exploration()
-    zero_crossing_rate()
-    eda_30sec_audiofiles_data()
-    principal_component_analysis()
+    #audio_data_exploration()
+    #zero_crossing_rate()
+    #eda_30sec_audiofiles_data()
+    #principal_component_analysis()
+    read_all_audiofile_extarct_fetaure()
