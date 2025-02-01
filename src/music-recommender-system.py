@@ -44,7 +44,7 @@ def load_data():
     print("Loading data")
     global data 
     
-    data = pd.read_csv(f'{audio_data_path}/features_3_sec.csv')
+    data = pd.read_csv(f'{audio_data_path}/audio_features_3_sec_extracted.csv')
     # data1 = pd.read_csv(f'{audio_data_path}/audio_features_with_genres.csv')
     # data = pd.concat([data, data1], ignore_index=True)
     data = data.iloc[0:, 1:]  # dropping first column 'filename'
@@ -181,7 +181,9 @@ def fit_and_save_models_xgboost(model, X_train, y_train, y_test ,title = "Defaul
 
     #Save model
     file_name = title.lower()+'.joblib'
+    #file_name = title.lower()+'.keras'
     joblib.dump(model, "models/"+file_name)
+    #model.save("models/"+file_name)
 
 
 def create_models():
@@ -219,12 +221,12 @@ def create_models():
     # Putting all models in dictionary 
     model_dictionary[f"Decission_trees"] = decision_tree 
     model_dictionary[f"Random_Forest"] = randomforest 
-    # model_dictionary[f"Naive_Bayes"] = naive_bayes 
-    # model_dictionary[f"Stochastic_Gradient_Descent"] = knn
-    # model_dictionary[f"KNN"] = sgd 
-    # model_dictionary[f"Support_Vector_Machine"] = svm
-    # model_dictionary[f"Logistic_Regression"] = logistic_reg
-    # model_dictionary[f"Neural_Nets"] = neural_net_mlcp 
+    model_dictionary[f"Naive_Bayes"] = naive_bayes 
+    model_dictionary[f"Stochastic_Gradient_Descent"] = knn
+    model_dictionary[f"KNN"] = sgd 
+    model_dictionary[f"Support_Vector_Machine"] = svm
+    model_dictionary[f"Logistic_Regression"] = logistic_reg
+    model_dictionary[f"Neural_Nets"] = neural_net_mlcp 
 
     # Iterate over the dictionary
     for key, value in model_dictionary.items():
@@ -387,9 +389,9 @@ def create_cnn_model_with_standardscaler():
     plotValidate(model_history_standard_scaler, "cnn_history_standrad_scaler.png")
     
 def create_cnn_model_with_custom(): 
-    data_cnn = pd.read_csv(f'{audio_data_path}/features_3_sec.csv')
-    data1_cnn = pd.read_csv(f'{audio_data_path}/audio_features_with_genres.csv')
-    data_cnn = pd.concat([data_cnn, data1_cnn], ignore_index=True)
+    data_cnn = pd.read_csv(f'{audio_data_path}/audio_features_3_sec_extracted.csv')
+    # data1_cnn = pd.read_csv(f'{audio_data_path}/audio_features_with_genres.csv')
+    # data_cnn = pd.concat([data_cnn, data1_cnn], ignore_index=True)
     print(data_cnn.shape)
     #data_cnn.head()
     data_cnn = data_cnn.drop(labels='filename',axis=1)
@@ -567,11 +569,11 @@ if __name__ == "__main__":
     load_data()
     print(data.head())
     ceate_features_target()
-    #create_models()
+    # create_models()
     create_xgboostmodels()
     #create_cnn_model()
     #create_cnn_model_with_standardscaler()
-    create_cnn_model_with_custom()
+    #create_cnn_model_with_custom()
     #print_label()
     #get_cnn_model()
     song_recommender_data()

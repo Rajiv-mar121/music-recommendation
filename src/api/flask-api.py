@@ -75,6 +75,7 @@ def recommend_genre():
                 model = load_model(value)  
                 
             else:
+                print("Loading Model :", value)
                 model = joblib.load(value)
             
     user_audio_features = extract_all_features(audio_file)
@@ -170,13 +171,13 @@ def extract_all_features(audio_path):
     
     # Chroma
     chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
-    chroma_stft_mean = np.mean(chroma_stft)
-    chroma_stft_var = np.var(chroma_stft)
+    chroma_stft_mean = np.mean(chroma_stft, dtype=np.float64)
+    chroma_stft_var = np.var(chroma_stft, dtype=np.float64)
 
     # RMS
     rms = librosa.feature.rms(y=y)
-    rms_mean = np.mean(rms)
-    rms_var = np.var(rms)
+    rms_mean = np.mean(rms, dtype=np.float64)
+    rms_var = np.var(rms, dtype=np.float64)
 
     # Spectral Centroid
     spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
@@ -200,10 +201,10 @@ def extract_all_features(audio_path):
 
     # Harmonic and Percussive
     harmony, perc = librosa.effects.hpss(y)
-    harmony_mean = np.mean(harmony)
-    harmony_var = np.var(harmony)
-    perceptr_mean = np.mean(perc)
-    perceptr_var = np.var(perc)
+    harmony_mean = np.mean(harmony, dtype=np.float64)
+    harmony_var = np.var(harmony, dtype=np.float64)
+    perceptr_mean = np.mean(perc, dtype=np.float64)
+    perceptr_var = np.var(perc, dtype=np.float64)
 
     # Tempo
     onset_env = librosa.onset.onset_strength(y=y, sr=sr)
@@ -212,8 +213,8 @@ def extract_all_features(audio_path):
 
     # MFCCs
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
-    mfcc_mean = np.mean(mfcc, axis=1)
-    mfcc_var = np.var(mfcc, axis=1)
+    mfcc_mean = np.mean(mfcc, axis=1, dtype=np.float64)
+    mfcc_var = np.var(mfcc, axis=1, dtype=np.float64)
     #print(mfcc_mean)
     #print(mfcc_var)
 

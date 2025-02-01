@@ -309,9 +309,9 @@ def read_all_audiofile_extarct_fetaure():
     ]
     df = pd.DataFrame(all_files_feature_list, columns=columns)
     # Save to CSV
-    output_csv = audio_data_path+"/audio_features_with_genres_extracted.csv"
+    output_csv = audio_data_path+"/audio_features_3_sec_extracted.csv"
     df.to_csv(output_csv, index=False, float_format="%.16f")
-    print("Feature extraction complete. Data saved to 'audio_features_with_genres_extracted.csv'.")
+    print("Feature extraction complete. Data saved to 'audio_features_3_sec_extracted.csv'.")
 
 
  
