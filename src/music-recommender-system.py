@@ -45,6 +45,8 @@ def load_data():
     global data 
     
     data = pd.read_csv(f'{audio_data_path}/features_3_sec.csv')
+    # data1 = pd.read_csv(f'{audio_data_path}/audio_features_with_genres.csv')
+    # data = pd.concat([data, data1], ignore_index=True)
     data = data.iloc[0:, 1:]  # dropping first column 'filename'
     # data_cnn = data_cnn.drop(labels='filename',axis=1)  # another way
 
@@ -566,7 +568,7 @@ if __name__ == "__main__":
     print(data.head())
     ceate_features_target()
     #create_models()
-    #create_xgboostmodels()
+    create_xgboostmodels()
     #create_cnn_model()
     #create_cnn_model_with_standardscaler()
     create_cnn_model_with_custom()
