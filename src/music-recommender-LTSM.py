@@ -19,9 +19,10 @@ from sklearn.metrics.pairwise import cosine_similarity
 from xgboost import XGBClassifier, XGBRFClassifier
 from tensorflow import keras
 from keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.layers import LSTM, Dense, Dropout, BatchNormalization
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.utils import plot_model
+from tensorflow.keras.regularizers import l2
 import matplotlib.pyplot as plt
 import joblib
 import os
@@ -73,7 +74,7 @@ def create_ltsm_model():
     # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # Define LSTM model
+    # Define LSTM model with 91% Accuracy
     ltsm_model = Sequential([
     LSTM(128, return_sequences=True, input_shape=(X.shape[1], X.shape[2])),
     Dropout(0.3),
@@ -82,6 +83,27 @@ def create_ltsm_model():
     Dense(32, activation='relu'),
     Dense(len(np.unique(y)), activation='softmax')  # Output layer for classification
     ])
+    
+    # 80% Accuracy only 
+    # ltsm_model = Sequential([
+    # LSTM(128, return_sequences=True,  input_shape=(X.shape[1], X.shape[2])),
+    # BatchNormalization(),
+    # Dropout(0.3),
+
+    # LSTM(64, return_sequences=True),
+    # BatchNormalization(),
+    # Dropout(0.3),
+
+    # LSTM(32, return_sequences=False),
+    # BatchNormalization(),
+    # Dropout(0.3),
+
+    # Dense(32, activation='relu'),
+    # Dropout(0.2),
+
+    # Dense(len(np.unique(y)), activation='softmax')  # Output layer for classification
+    # ])
+
     ltsm_summary = ltsm_model.summary()
     with open(output_path+'ltsm_architecture.txt','w') as f:
         with redirect_stdout(f):
@@ -98,7 +120,7 @@ def create_ltsm_model():
         restore_best_weights=True  # Restore the best model weights
     )
     # Train the model
-    epochs =50
+    epochs =500
     batch_size = 32
     ltsm_model_history = ltsm_model.fit(
                             X_train, y_train, 
