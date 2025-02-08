@@ -1,0 +1,120 @@
+name: music-recommender-application
+on: 
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: my-step
+        run: echo "Hello World music-recommender!"
+      
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+           python -m pip install --upgrade pip
+           pip install flake8
+
+      - name: Lint with flake8
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+           python -m pip install --upgrade pip
+           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+           pip install pytest
+
+      - name: Run tests with pytest
+        run: echo "Hello World test music-recommender!"
+
+  docker-build-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+           python -m pip install --upgrade pip
+           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+           pip install pytest
+
+      - name: Path
+        run: echo ${{ github.workspace }}
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+       
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: 
+          file: ./Docker/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/my-python-app:latest
+      
+      - name: Docker Run
+        run: docker run -d --name my-python-app -p 80:80 ${{ secrets.DOCKER_USERNAME }}/my-python-app:latest
+
+      - name: Stop and remove Docker container
+        run: |
+          docker stop my-python-app
+          docker rm my-python-app
+
+
+
+            
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+           python -m pip install --upgrade pip
+           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+           pip install pytest
+
+      - name: Deploy model
+        run: echo "Hello World deploy music-recommender!"
+
