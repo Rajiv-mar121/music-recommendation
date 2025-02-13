@@ -116,5 +116,5 @@ jobs:
            pip install pytest
 
       - name: Deploy model
-        run: echo "Hello World deploy music-recommender!"
+        run: python src/api/flask-api.py
 
