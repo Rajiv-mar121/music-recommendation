@@ -10,7 +10,7 @@ from tensorflow.keras.models import load_model
 
 app = Flask(__name__)
 
-
+#python .\src\api\flask-api.py
 """ # Load the trained model using pickle
 with open('model.pkl', 'rb') as model_file:
     model = pickle.load(model_file) """
