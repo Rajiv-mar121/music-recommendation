@@ -259,7 +259,7 @@ def model_recommendation():
     
     with tab1:
         st.header("Music Recommendation and Genre Classification")
-        
+        audio_data_path = 'data/audio'
         with st.form("model_form", clear_on_submit=True):
             st.write("Model Selection Form:")
     
@@ -309,6 +309,11 @@ def model_recommendation():
                 if response.status_code == 200:
                     st.success("Similar song recommender initiated")
                     st.json(response.json())
+                    # Put loop and play songs
+                    # Assuming songs are stored locally or on a URL
+                    audio_file = f'{audio_data_path}/genres_original/pop/pop.00023.wav'
+                    # Audio Player
+                    st.audio(audio_file, format='audio/wav')
                 else:
                     st.error(f"Failed to send data: {response.status_code}")
             except Exception as e:
