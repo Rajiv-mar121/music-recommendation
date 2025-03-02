@@ -118,10 +118,10 @@ def create_transformer_model():
     transformer_model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
     
     # Print model summary
-    transformer_model.summary()
-    with open(output_path+'transformer_architecture.txt','w') as f:
-        with redirect_stdout(f):
-            transformer_model.summary()
+    # transformer_model.summary()
+    # with open(output_path+'transformer_architecture.txt','w') as f:
+    #     with redirect_stdout(f):
+    #         transformer_model.summary()
     
     # Define early stopping callback
     early_stopping = EarlyStopping(
@@ -131,12 +131,12 @@ def create_transformer_model():
     )
     #,callbacks=[early_stopping]
     # 5. Train the Model
-    transformer_model_history = transformer_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=110, batch_size=32)
+    transformer_model_history = transformer_model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=150, batch_size=32)
 
     # 6. Evaluate the Model
     test_loss, test_acc = transformer_model.evaluate(X_test, y_test)
     print(f"Test Accuracy: {test_acc:.4f}")
-    print(f'Test Accuracy: {test_acc * 100:.2f}%')      # Test Accuracy: 80.22%
+    print(f'Test Accuracy: {test_acc * 100:.2f}%')      # Test Accuracy: 89.00%
     predicted_value = transformer_model.predict(X_test)
     preds_class = np.argmax(predicted_value, axis=1) 
     target_names = sorted(set(y_genre_label_encoded))

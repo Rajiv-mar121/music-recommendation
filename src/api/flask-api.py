@@ -256,9 +256,30 @@ def extract_all_features(audio_path):
     #print(x_test.iloc[0:4])
     return user_audio_features
 
-
+@app.route('/api/recommend-song', methods=['POST'])
+def recommend_similar_songs():
+    print("Inside API")
+    data = request.get_json()
+    #song_file_name = 'pop.00019.wav'
+    song_file_name = data.get('song_name')
+    print("data ", data)
+    similarity_df_names = joblib.load(models_path+'similarity_df_names.joblib')
+    # Find songs most similar to another song
+    series = similarity_df_names[song_file_name].sort_values(ascending = False)
+    # Remove cosine similarity == 1 (songs will always have the best match with themselves)
+    series = series.drop(song_file_name)
+    
+    # Display the 5 top matches 
+    print("\n*******\nSimilar songs to ", song_file_name)
+    print(series.head(5))
+    similar_songs = series.head(5)
+    # Convert Series to dictionary and return as JSON
+    response_data = similar_songs.to_dict()
+    return response_data
+    
 
 if __name__ == '__main__':
     app.run(debug=False)
+    #app.run(debug=True)
     #app.run(debug=True, use_reloader=True, extra_files=["./music-recommendation"])
     """ app.run(host='0.0.0.0', port=5000) """

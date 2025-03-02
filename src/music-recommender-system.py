@@ -492,6 +492,8 @@ def song_recommender_data():
     sim_df_names = sim_df_labels.set_index(labels.index)
     sim_df_names.columns = labels.index
     similarity_df_names = sim_df_names
+    ## Saving similarty data frame
+    joblib.dump(similarity_df_names, "models/similarity_df_names.joblib")
     print(sim_df_names.head())
 
 def find_similar_songs(song_file_name):
@@ -570,7 +572,7 @@ if __name__ == "__main__":
     print(data.head())
     ceate_features_target()
     # create_models()
-    create_xgboostmodels()
+    #create_xgboostmodels()
     #create_cnn_model()
     #create_cnn_model_with_standardscaler()
     #create_cnn_model_with_custom()

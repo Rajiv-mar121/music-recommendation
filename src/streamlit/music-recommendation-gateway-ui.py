@@ -255,7 +255,7 @@ def model_recommendation():
     st.title("Model Recommendation")
     
     # Create tabs
-    tab1, tab2 = st.tabs(["Genre Pridiction", "Chart 2"])
+    tab1, tab2 = st.tabs(["Genre Pridiction", "Similar Song"])
     
     with tab1:
         st.header("Music Recommendation and Genre Classification")
@@ -299,6 +299,20 @@ def model_recommendation():
                         st.error(f"Failed to send data: {response.status_code}")
                 except Exception as e:
                     st.error(f"Error: {e}")     
+    with tab2:
+        st.header("Similar Song Recommendation")
+        song_name = st.text_input("Enter the song name")
+        if st.button("Submit"):
+            try:
+                payload = {"song_name": song_name}
+                response = requests.post(f"{API_URL}/recommend-song", json=payload)
+                if response.status_code == 200:
+                    st.success("Similar song recommender initiated")
+                    st.json(response.json())
+                else:
+                    st.error(f"Failed to send data: {response.status_code}")
+            except Exception as e:
+                st.error(f"Error: {e}")
 # Main app
 def main():
     # Handle navigation
