@@ -308,12 +308,26 @@ def model_recommendation():
                 response = requests.post(f"{API_URL}/recommend-song", json=payload)
                 if response.status_code == 200:
                     st.success("Similar song recommender initiated")
-                    st.json(response.json())
+                    response_json = response.json()
+                    st.json(response_json)
                     # Put loop and play songs
                     # Assuming songs are stored locally or on a URL
-                    audio_file = f'{audio_data_path}/genres_original/pop/pop.00023.wav'
-                    # Audio Player
-                    st.audio(audio_file, format='audio/wav')
+                    recommended_song = response_json.keys()
+                    # Initialize session state for song playback
+                    for song in recommended_song:
+                        genre = song.split('.')[0]
+                        print(genre)
+                        audio_file = os.path.join(audio_data_path, "genres_original", genre, song)
+                        #print(audio_file)
+                        # Audio Player
+                        #st.audio(audio_file, format='audio/wav')
+                        with st.container():
+                            st.subheader(f"🎶 {song}")  # Display song name
+                            st.write(f"**Genre:** {genre.capitalize()}")  
+                            st.audio(audio_file, format='audio/wav')  # Audio player
+                        st.markdown("---")  # Separator for better UI
+                        
+                    #audio_file = f'{audio_data_path}/genres_original/pop/pop.00023.wav'
                 else:
                     st.error(f"Failed to send data: {response.status_code}")
             except Exception as e:
