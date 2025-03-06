@@ -316,7 +316,7 @@ def model_recommendation():
                     # Initialize session state for song playback
                     for song in recommended_song:
                         genre = song.split('.')[0]
-                        print(genre)
+                        #print(genre)
                         audio_file = os.path.join(audio_data_path, "genres_original", genre, song)
                         #print(audio_file)
                         # Audio Player
