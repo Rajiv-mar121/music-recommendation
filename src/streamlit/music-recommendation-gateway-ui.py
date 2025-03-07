@@ -264,7 +264,7 @@ def model_recommendation():
             st.write("Model Selection Form:")
     
             # Dropdown box
-            options = ["CNN (Standard)","CNN (Custom)", "Random Forest", "XG Boost", "Decission Tree", "KNN","Logistic Regression","Naive Bayes","Neural Net","Stochastic Gradient Descent","Support Vector Machine"]
+            options = ["CNN (Standard)","CNN (Custom)", "Random Forest", "XG Boost","Transformer-wav2vec" ,"Decission Tree", "KNN","Logistic Regression","Naive Bayes","Neural Net","Stochastic Gradient Descent","Support Vector Machine"]
             selected_model = st.selectbox("Choose an model:", options,index=None,
                 placeholder="...PlEASE SELECT...",)
             

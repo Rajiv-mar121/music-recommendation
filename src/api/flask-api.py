@@ -5,8 +5,11 @@ import streamlit as st
 import joblib
 import pandas as pd
 import os
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 from io import BytesIO
 from tensorflow.keras.models import load_model
+from transformers import Wav2Vec2Processor, Wav2Vec2ForSequenceClassification
+import torch
 
 app = Flask(__name__)
 
@@ -68,6 +71,10 @@ def recommend_genre():
     model_name = request.form['model_name']
     print("File recieved :"+audio_file.filename)
     print("Model name :"+model_name)
+    if(model_name == "Transformer-wav2vec"):
+        print("loading Tranformer wav2vec")    
+        return processWav2VecTransformer(audio_file)
+    
     for key, value in model_dictionary.items():
         if(key == model_name):
             if(model_name == "CNN (Custom)"):
@@ -113,7 +120,7 @@ def recommend_genre():
         print("CNN genre ",predicted_genre)
         response_json = {"genre-type": predicted_genre[0]}
         return response_json
-        
+           
     else:     
         predictions = model.predict(user_audio_features)
         
@@ -276,7 +283,40 @@ def recommend_similar_songs():
     # Convert Series to dictionary and return as JSON
     response_data = similar_songs.to_dict()
     return response_data
+
+def processWav2VecTransformer(audio_file):
+    print("Inside Transformer processWav2VecTransformer()")
+     # Load the fine-tuned model and processor
+    MODEL_PATH = models_path + "fine-tuned-wav2vec2-genre"
+    model = Wav2Vec2ForSequenceClassification.from_pretrained(MODEL_PATH,  num_labels=10)
+    processor = Wav2Vec2Processor.from_pretrained(MODEL_PATH)
     
+    LABELS = {
+    0: "Blues",
+    1: "Classical",
+    2: "Country",
+    3: "Disco",
+    4: "HipHop",
+    5: "Jazz",
+    6: "Metal",
+    7: "Pop",
+    8: "Reggae",
+    9: "Rock"
+    }
+    audio, sr = librosa.load(audio_file, sr=16000)
+    input_values = processor(audio, return_tensors="pt", sampling_rate=16000).input_values
+    
+    # Get model predictions
+    with torch.no_grad():
+        logits = model(input_values).logits
+    
+    predicted_class = torch.argmax(logits, dim=-1).item()
+    predicted_genre = LABELS.get(predicted_class, "Unknown")
+    print("predicted_class = ", predicted_class)
+    #print("predicted_genre = ", predicted_genre)
+    #return predicted_genre  # Update this with a mapping if needed
+    response_json = {"genre-type": predicted_genre}
+    return response_json    
 
 if __name__ == '__main__':
     app.run(debug=False)
