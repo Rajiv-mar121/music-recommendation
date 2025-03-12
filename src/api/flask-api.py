@@ -302,8 +302,11 @@ def processWav2VecTransformer(audio_file):
     7: "Pop",
     8: "Reggae",
     9: "Rock"
-    }
-    audio, sr = librosa.load(audio_file, sr=16000)
+    }  
+    
+    audio, sr = librosa.load(audio_file, sr=16000, duration=35)
+    total_duration = librosa.get_duration(y=audio, sr=sr)
+    print("Total duration ", total_duration)
     input_values = processor(audio, return_tensors="pt", sampling_rate=16000).input_values
     
     # Get model predictions

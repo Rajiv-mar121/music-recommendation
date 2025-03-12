@@ -17,11 +17,12 @@ models_path = 'models/'
 MODEL_PATH = "models/fine-tuned-wav2vec2-genre"
 
 # Load processor from the base model
-MODEL_NAME = "facebook/wav2vec2-base"
-processor = Wav2Vec2Processor.from_pretrained(MODEL_NAME)
+# MODEL_NAME = "facebook/wav2vec2-base"
+# processor = Wav2Vec2Processor.from_pretrained(MODEL_NAME)
 
-# Save the processor from base model in the fine-tuned model directory
-processor.save_pretrained(models_path+"fine-tuned-wav2vec2-genre-6mar")
+# # Save the processor from base model in the fine-tuned model directory
+# processor.save_pretrained(models_path+"fine-tuned-wav2vec2-genre-6mar")
+
 # Load model
 #model = Wav2Vec2ForSequenceClassification.from_pretrained(MODEL_PATH, from_safetensors=True)
 
@@ -46,7 +47,16 @@ LABELS = {
 
 def predict_genre(audio_file):
     # Load audio file
-    audio, sr = librosa.load(audio_file, sr=16000)
+    #audio, sr = librosa.load(audio_file, sr=16000)
+   
+    # Get total duration of the audio file
+    total_duration = librosa.get_duration(filename=audio_file, sr=16000)
+    print("Total duration ", total_duration)
+    # Load only up to 30 seconds if duration is greater than 30 seconds
+    if total_duration > 35:
+        audio, sr = librosa.load(audio_file, sr=16000, duration=30)
+    else:
+        audio, sr = librosa.load(audio_file, sr=16000)
     input_values = processor(audio, return_tensors="pt", sampling_rate=16000).input_values
     
     # Get model predictions
@@ -69,7 +79,8 @@ def predict_genre(audio_file):
 if __name__ == "__main__":
     print("Rajiv")
     #audio_file = f'{audio_data_path}/genres_original/pop/pop.00023.wav'
-    audio_file = f'{audio_data_path}/genres_original/blues/blues.00005.wav'
+    #audio_file = f'{audio_data_path}/genres_original/blues/blues.00005.wav'
     audio_file = f'{audio_data_path}/genres_original/metal/metal.00056.wav'
+    #audio_file = f'data/US_Army_Blues_-_08_-_Kellis_Number(chosic.com).wav'
     predicted_genre = predict_genre(audio_file)
     print("predicted_genre = ", predicted_genre)
