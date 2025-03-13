@@ -64,7 +64,7 @@ def create_ltsm_model():
     #features = data_ltsm.drop(columns=['label'])
     X_transform = standard_scaler.fit_transform(np.array(data_ltsm.iloc[:, :-1], dtype = float))
     ## Save standrad scaler
-    #joblib.dump(standard_scaler, model_path+"scaler_ltsm_model.joblib")
+    joblib.dump(standard_scaler, model_path+"scaler_ltsm_model.joblib")
     print(X_transform.shape)
     
     # Reshape data for LSTM (samples, time steps, features)

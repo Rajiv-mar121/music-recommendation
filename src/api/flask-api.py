@@ -81,12 +81,12 @@ def recommend_genre():
             if(model_name == "CNN (Custom)"):
                 print("CNN (Custom) found loading", value)
                 model = load_model(value)  
+                
             elif(model_name == "LTSM (RNN)"): 
                 print("LTSM (RNN) found loading", value)   
                 model = load_model(value)
-                processLTSM(model, audio_file )
-                response_json = {"genre-type": "pop"}
-                return response_json 
+                return processLTSM(model, audio_file )
+
             else:
                 print("Loading Model :", value)
                 model = joblib.load(value)
@@ -150,16 +150,29 @@ def recommend_genre():
 
 def processLTSM(model, audio_file):
     print("Processing for LTSM")
-    scaler = joblib.load("models/scaler_cnn_model_standard_scaler_custom.joblib")
-    encoder = joblib.load("models/scaler_ltsm_model.joblib")
+    scaler_ltsm = joblib.load("models/scaler_ltsm_model.joblib")
+    encoder_ltsm = joblib.load("models/encoder_ltsm_model.joblib")
+    
+    # Extracting features from uploded audio file
     user_audio_features = extract_all_features(audio_file)
-    features_transformed_ltsm = scaler.transform(np.array(user_audio_features, dtype = float).reshape(1, -1))
+    features_transformed_ltsm = scaler_ltsm.transform(np.array(user_audio_features, dtype = float).reshape(1, -1))
+    # Reshape for LSTM (Assuming time_steps = 1 and input_dim = len(features)/1)
+    time_steps = 1  
+    input_dim = features_transformed_ltsm.shape[1] // time_steps
+    features_reshaped = features_transformed_ltsm.reshape(1, time_steps, input_dim)
+    
     print("LTSM UI reshaped: ",features_transformed_ltsm)
-    predictions_ltsm = model.predict(np.array(features_transformed_ltsm, dtype = float).reshape(1, 58))
+    
+    #predictions_ltsm = model.predict(np.array(features_reshaped, dtype = float))
+    predictions_ltsm = model.predict(features_reshaped)
     print("LTSM UI predic: ",predictions_ltsm)
+    
     predicted_class_index_ltsm = np.argmax(predictions_ltsm, axis=1)
-    print("LTSM RNN predicted_class_index ",predicted_class_index_ltsm)
-    predicted_genre_ltsm = encoder.inverse_transform(predicted_class_index_ltsm)
+    print("LTSM RNN predicted_class_index = ",predicted_class_index_ltsm)
+    
+    # Perform inverse transform
+    predicted_genre_ltsm = encoder_ltsm.inverse_transform(predicted_class_index_ltsm)  # Flatten back to 1D
+
     print("LTSM genre ",predicted_genre_ltsm)
     response_json = {"genre-type": predicted_genre_ltsm[0]}
     return response_json
