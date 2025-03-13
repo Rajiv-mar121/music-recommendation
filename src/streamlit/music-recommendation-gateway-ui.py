@@ -203,9 +203,9 @@ def model_analysis():
         df = pd.DataFrame(accuracy_data, columns=["Model", "Accuracy"])
         df = df.sort_values(by="Accuracy", ascending=False)
         
-         # Show top 3 files
-        st.subheader("Top 4 Most Accurate Models are")
-        st.table(df.head(4))
+         # Show top 5 files
+        st.subheader("Top 5 Most Accurate Models are")
+        st.table(df.head(5))
 
         
         # Plot the graph
