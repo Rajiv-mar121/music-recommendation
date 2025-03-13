@@ -346,6 +346,8 @@ def recommend_song(genre_json):
     print(genre)
     payload = {"song_name": genre.lower()+".00000.wav"}
     response = requests.post(f"{API_URL}/recommend-song", json=payload)
+    with st.spinner('Calculating Similar Songs Please wait...'):
+        time.sleep(3)
     if response.status_code == 200:
         st.success("Similar song recommender initiated")
         response_json = response.json()
