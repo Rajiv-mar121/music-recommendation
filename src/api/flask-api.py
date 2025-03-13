@@ -34,6 +34,7 @@ model_dictionary[f"Neural Net"] = models_path+'neural_nets.joblib'
 
 model_dictionary[f"Stochastic Gradient Descent"] = models_path+'stochastic_gradient_descent.joblib' 
 model_dictionary[f"Support Vector Machine"] = models_path+'support_vector_machine.joblib' 
+model_dictionary[f"LTSM (RNN)"] = models_path+'ltsm_model.keras'
 
 #model_dictionary[f"Decission_trees"] = models_path+'random_forest.joblib' 
 
@@ -42,7 +43,7 @@ model_dictionary[f"Support Vector Machine"] = models_path+'support_vector_machin
 # Load the trained model
 #cross_gradient_booster knn
 model = joblib.load('models/random_forest.joblib')
-
+#ltsm_model.keras
 # Load audio 
 audio_data_path = 'data/audio'
 #print(list(os.listdir(f'{audio_data_path}/')))
@@ -80,7 +81,12 @@ def recommend_genre():
             if(model_name == "CNN (Custom)"):
                 print("CNN (Custom) found loading", value)
                 model = load_model(value)  
-                
+            elif(model_name == "LTSM (RNN)"): 
+                print("LTSM (RNN) found loading", value)   
+                model = load_model(value)
+                processLTSM(model, audio_file )
+                response_json = {"genre-type": "pop"}
+                return response_json 
             else:
                 print("Loading Model :", value)
                 model = joblib.load(value)
@@ -142,6 +148,23 @@ def recommend_genre():
         #response_json = {"genre-type": "reggae-hardcoded"}    
         return response_json
 
+def processLTSM(model, audio_file):
+    print("Processing for LTSM")
+    scaler = joblib.load("models/scaler_cnn_model_standard_scaler_custom.joblib")
+    encoder = joblib.load("models/scaler_ltsm_model.joblib")
+    user_audio_features = extract_all_features(audio_file)
+    features_transformed_ltsm = scaler.transform(np.array(user_audio_features, dtype = float).reshape(1, -1))
+    print("LTSM UI reshaped: ",features_transformed_ltsm)
+    predictions_ltsm = model.predict(np.array(features_transformed_ltsm, dtype = float).reshape(1, 58))
+    print("LTSM UI predic: ",predictions_ltsm)
+    predicted_class_index_ltsm = np.argmax(predictions_ltsm, axis=1)
+    print("LTSM RNN predicted_class_index ",predicted_class_index_ltsm)
+    predicted_genre_ltsm = encoder.inverse_transform(predicted_class_index_ltsm)
+    print("LTSM genre ",predicted_genre_ltsm)
+    response_json = {"genre-type": predicted_genre_ltsm[0]}
+    return response_json
+    
+    
 @app.route('/api/predict', methods=['POST'])
 def predict():
     data = request.get_json()

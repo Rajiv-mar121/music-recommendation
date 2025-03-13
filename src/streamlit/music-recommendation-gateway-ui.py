@@ -9,6 +9,7 @@ import requests
 import re
 import matplotlib.pyplot as plt
 import plotly.express as px
+import json
 
 # Run UI
 # streamlit run .\src\streamlit\music-recommendation-gateway-ui.py
@@ -17,6 +18,7 @@ import plotly.express as px
 # Flask API base URL
 API_URL = "http://127.0.0.1:5000/api"
 image_path = "output/cnn_history.png"
+audio_data_path = 'data/audio'
 
 st.set_page_config(
     page_title="Multi-page Streamlit App",
@@ -264,7 +266,7 @@ def model_recommendation():
             st.write("Model Selection Form:")
     
             # Dropdown box
-            options = ["CNN (Standard)","CNN (Custom)", "Random Forest", "XG Boost","Transformer-wav2vec" ,"Decission Tree", "KNN","Logistic Regression","Naive Bayes","Neural Net","Stochastic Gradient Descent","Support Vector Machine"]
+            options = ["CNN (Standard)","CNN (Custom)", "LTSM (RNN)","Random Forest","Transformer-wav2vec" ,"XG Boost","Decission Tree", "KNN","Logistic Regression","Naive Bayes","Neural Net","Stochastic Gradient Descent","Support Vector Machine"]
             selected_model = st.selectbox("Choose an model:", options,index=None,
                 placeholder="...PlEASE SELECT...",)
             
@@ -295,6 +297,9 @@ def model_recommendation():
                         st.json(response.json())
                         #st.write(f"The predicted genre is: **{response}**")
                         #st.text_area(response.content)
+                        
+                        time.sleep(3)
+                        recommend_song(response.json())
                     else:
                         st.error(f"Failed to send data: {response.status_code}")
                 except Exception as e:
@@ -309,7 +314,9 @@ def model_recommendation():
                 if response.status_code == 200:
                     st.success("Similar song recommender initiated")
                     response_json = response.json()
-                    st.json(response_json)
+                    #st.json(response_json)
+                    sorted_data = dict(sorted(response_json.items(), key=lambda item: item[1], reverse=True))
+                    st.json(sorted_data)
                     # Put loop and play songs
                     # Assuming songs are stored locally or on a URL
                     recommended_song = response_json.keys()
@@ -332,6 +339,35 @@ def model_recommendation():
                     st.error(f"Failed to send data: {response.status_code}")
             except Exception as e:
                 st.error(f"Error: {e}")
+                
+def recommend_song(genre_json):
+    # data = json.loads(genre_json)
+    genre = genre_json["genre-type"]
+    print(genre)
+    payload = {"song_name": genre.lower()+".00000.wav"}
+    response = requests.post(f"{API_URL}/recommend-song", json=payload)
+    if response.status_code == 200:
+        st.success("Similar song recommender initiated")
+        response_json = response.json()
+        #st.json(response_json)
+        sorted_data = dict(sorted(response_json.items(), key=lambda item: item[1], reverse=True))
+        st.json(sorted_data)
+        # Put loop and play songs
+        # Assuming songs are stored locally or on a URL
+        recommended_song = response_json.keys()
+        # Initialize session state for song playback
+        for song in recommended_song:
+            genre = song.split('.')[0]
+            #print(genre)
+            audio_file = os.path.join(audio_data_path, "genres_original", genre, song)
+            #print(audio_file)
+            # Audio Player
+            #st.audio(audio_file, format='audio/wav')
+            with st.container():
+                st.subheader(f"🎶 {song}")  # Display song name
+                st.write(f"**Genre:** {genre.capitalize()}")  
+                st.audio(audio_file, format='audio/wav')  # Audio player
+            st.markdown("---")  # Separator for better UI
 # Main app
 def main():
     # Handle navigation
