@@ -10,6 +10,10 @@ import re
 import matplotlib.pyplot as plt
 import plotly.express as px
 import json
+import random
+import librosa
+import librosa.display
+import io
 
 # Run UI
 # streamlit run .\src\streamlit\music-recommendation-gateway-ui.py
@@ -59,24 +63,71 @@ def home():
     st.title("Home")
     
     # Create tabs
-    tab1, tab2 = st.tabs(["Tab 1", "Tab 2"])
+    tab1, tab2 = st.tabs(["File Exploration", "Tab 2"])
     
     with tab1:
         st.header("Home Tab 1")
-        st.write("Welcome to the first tab of the Home page!")
-        st.markdown("""
-        This is sample content for Home Tab 1:
-        - Feature 1
-        - Feature 2
-        - Feature 3
-        """)
-        if st.button("Show Image 1"):       
-            image_path = "output/cnn_history.png"
-            image = load_image(image_path)
-            if image:
-                st.image(image, caption="Image 1", use_column_width=True)
-            else:
-                st.error("Image 1 not found. Please check the file path.")
+        st.write("Live Audio File Exploration")
+        # st.markdown("""
+        # Exploring Audio file:
+        # - Feature 1
+        # - Feature 2
+        # - Feature 3
+        # """)
+        # if st.button("Show Image 1"):       
+        #     image_path = "output/cnn_history.png"
+        #     image = load_image(image_path)
+        #     if image:
+        #         st.image(image, caption="Image 1", use_column_width=True)
+        #     else:
+        #         st.error("Image 1 not found. Please check the file path.")
+        uploaded_file = st.file_uploader("Upload a sound file (MP3/WAV):", type=["mp3", "wav"])
+        if uploaded_file:
+            st.write(f"Uploaded file: {uploaded_file.name}")   
+            if st.button("Visualize File"):
+                with st.spinner("Processing audio file... Please wait ⏳"):
+                    y, sr = librosa.load(uploaded_file, sr=None)
+
+                    # Compute Spectrogram (STFT)
+                    D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+                    
+                    # plt.figure(figsize = (16, 6))
+                    # librosa.display.waveshow(uploaded_file, sr=sr, alpha=0.4, color = '#A300F9');
+                    # plt.plot(t, normalize(spectral_centroids), color='#FFB100');
+
+                    # Compute Chroma STFT
+                    chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+
+                    # Compute RMS Energy
+                    rms = librosa.feature.rms(y=y)
+                    # with st.spinner('Loading Graphs Please wait...'):
+                    #     time.sleep(3)
+                    # Create subplots
+                    fig, ax = plt.subplots(3, 1, figsize=(6, 6))
+
+                    # Plot Spectrogram
+                    img1 = librosa.display.specshow(D, sr=sr, x_axis="time", y_axis="log", ax=ax[0])
+                    ax[0].set_title("Spectrogram (STFT)", fontsize=8)
+                    fig.colorbar(img1, ax=ax[0], format="%+2.0f dB")
+
+                    # Plot Chroma STFT
+                    img2 = librosa.display.specshow(chroma, sr=sr, x_axis="time", y_axis="chroma", ax=ax[1])
+                    ax[1].set_title("Chroma STFT", fontsize=8)
+                    fig.colorbar(img2, ax=ax[1])
+
+                    # Plot RMS Energy
+                    ax[2].plot(librosa.times_like(rms, sr=sr), rms[0], color="r")
+                    ax[2].set_title("RMS Energy", fontsize=8)
+                    ax[2].set_xlabel("Time (s)", fontsize=8)
+                    ax[2].set_ylabel("RMS", fontsize=8)
+                    
+                    plt.tight_layout() 
+
+                    # Display in Streamlit
+                    st.pyplot(fig)
+                    
+                st.success("Rendering Complete ✅") 
+                
         
     with tab2:
         st.header("Home Tab 2")
@@ -344,7 +395,9 @@ def recommend_song(genre_json):
     # data = json.loads(genre_json)
     genre = genre_json["genre-type"]
     print(genre)
-    payload = {"song_name": genre.lower()+".00000.wav"}
+    num = random.randint(0, 48)
+    formatted_num = f"{num:02}" 
+    payload = {"song_name": genre.lower()+".000"+formatted_num+".wav"}
     response = requests.post(f"{API_URL}/recommend-song", json=payload)
     with st.spinner('Calculating Similar Songs Please wait...'):
         time.sleep(3)
